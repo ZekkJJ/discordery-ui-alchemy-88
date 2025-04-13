@@ -29,8 +29,8 @@ const DiscordAuth = () => {
           console.log("Session found:", session.user.id);
           toast.success("Successfully authenticated with Discord!");
           setTimeout(() => {
-            navigate("/");
-          }, 1500);
+            window.location.href = "/"; // Use window.location for a full page reload
+          }, 1000);
           return;
         }
         
@@ -42,28 +42,13 @@ const DiscordAuth = () => {
           console.log("Session refreshed successfully");
           toast.success("Successfully authenticated with Discord!");
           setTimeout(() => {
-            navigate("/");
-          }, 1500);
+            window.location.href = "/"; // Use window.location for a full page reload
+          }, 1000);
           return;
         }
         
         if (refreshError) {
           console.error("Auth refresh error:", refreshError);
-        }
-        
-        // Check URL for access token (for client-side flow if needed)
-        const fragment = new URLSearchParams(window.location.hash.slice(1));
-        const accessToken = fragment.get('access_token');
-        
-        if (accessToken) {
-          console.log("Found access token in URL");
-          // In this case we would handle client-side auth, but our flow is server-side
-          // This is just a fallback that shouldn't normally be needed
-          toast.success("Authentication token found!");
-          setTimeout(() => {
-            navigate("/");
-          }, 1500);
-          return;
         }
         
         throw new Error("No session found. Authentication failed. Please try logging in again.");

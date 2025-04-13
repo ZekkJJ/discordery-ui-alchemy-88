@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
@@ -78,7 +79,32 @@ const Navbar: React.FC = () => {
       
       // Get email from the user object for matching
       const { data: authUser } = await supabase.auth.getUser();
+      console.log("Auth user:", authUser);
+      
       const userEmail = authUser?.user?.email;
+      const userMetadata = authUser?.user?.user_metadata;
+      
+      console.log("User email:", userEmail);
+      console.log("User metadata:", userMetadata);
+      
+      if (userMetadata?.discord_id) {
+        const discordId = userMetadata.discord_id;
+        console.log("Trying to find user by Discord ID from metadata:", discordId);
+        
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('discord_id', discordId)
+          .maybeSingle();
+          
+        if (error) {
+          console.error("Error fetching user data by Discord ID from metadata:", error);
+        } else if (data) {
+          console.log("User data found by Discord ID from metadata:", data);
+          setUserData(data);
+          return;
+        }
+      }
       
       if (!userEmail) {
         console.log("No user email found, trying fallback approach");
@@ -156,7 +182,7 @@ const Navbar: React.FC = () => {
         return;
       }
       
-      console.log("Available users in database:", allUsers?.length || 0);
+      console.log("Available users in database:", allUsers);
       
     } catch (error) {
       console.error("Failed to fetch user data:", error);
@@ -183,6 +209,17 @@ const Navbar: React.FC = () => {
     if (!userData?.avatar) return undefined;
     return `https://cdn.discordapp.com/avatars/${userData.discord_id}/${userData.avatar}.png`;
   };
+
+  // If userData exists but avatar doesn't, try to get it from user_metadata
+  const fallbackAvatarUrl = () => {
+    if (userData && !userData.avatar && user?.user_metadata?.avatar) {
+      return `https://cdn.discordapp.com/avatars/${user.user_metadata.discord_id}/${user.user_metadata.avatar}.png`;
+    }
+    return undefined;
+  };
+
+  const username = userData?.discord_username || user?.user_metadata?.discord_username || "User";
+  const avatarUrl = getAvatarUrl() || fallbackAvatarUrl();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-discordery-background/95 backdrop-blur-sm border-b border-discordery-gray/20">
@@ -238,8 +275,8 @@ const Navbar: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-gray-800 animate-pulse"></div>
               ) : userData ? (
                 <UserProfileDropdown 
-                  username={userData.discord_username} 
-                  avatarUrl={getAvatarUrl()}
+                  username={username} 
+                  avatarUrl={avatarUrl}
                   onLogout={handleLogout}
                 />
               ) : (
