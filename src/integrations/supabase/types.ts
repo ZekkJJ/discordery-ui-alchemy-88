@@ -153,7 +153,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      upsert_user_data: {
+        Args: {
+          p_id: string
+          p_discord_id: string
+          p_discord_username: string
+          p_email: string
+          p_discriminator: string
+          p_avatar: string
+          p_access_token: string
+          p_refresh_token: string
+          p_token_expires_at: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
