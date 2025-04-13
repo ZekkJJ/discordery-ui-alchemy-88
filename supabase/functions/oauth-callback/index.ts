@@ -13,6 +13,7 @@ const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID") || "1360393180482375
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET");
 // This must match exactly what is registered in Discord Developer Portal
 const REDIRECT_URI = Deno.env.get("DISCORD_REDIRECT_URI") || "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-callback";
+const FRONTEND_URL = "https://sprightly-sawine-1d6202.netlify.app"; // Hardcoded frontend URL
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -27,29 +28,6 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Determine the frontend URL dynamically based on the request
-    const requestUrl = new URL(req.url);
-    const referer = req.headers.get('referer') || '';
-    const origin = req.headers.get('origin') || '';
-    
-    // Try to get the frontend URL from different sources
-    let FRONTEND_URL = Deno.env.get("FRONTEND_URL");
-    
-    if (!FRONTEND_URL) {
-      // If no explicit FRONTEND_URL is set, try to determine it from the request
-      if (origin) {
-        FRONTEND_URL = origin;
-      } else if (referer) {
-        const refererUrl = new URL(referer);
-        FRONTEND_URL = `${refererUrl.protocol}//${refererUrl.host}`;
-      } else {
-        // Default fallback - use the same origin as the request
-        FRONTEND_URL = `${requestUrl.protocol}//${requestUrl.host}`;
-      }
-      
-      console.log("Dynamically determined FRONTEND_URL:", FRONTEND_URL);
-    }
-    
     // Create a Supabase client with admin privileges
     if (!SUPABASE_SERVICE_ROLE_KEY) {
       console.error("SUPABASE_SERVICE_ROLE_KEY is not set");
@@ -67,6 +45,7 @@ serve(async (req: Request) => {
     // Log received parameters for debugging
     console.log("Received code:", code ? "present" : "missing");
     console.log("Received state:", state ? "present" : "missing");
+    console.log("Using frontend URL:", FRONTEND_URL);
     
     // Validate required parameters
     if (!code) {
@@ -303,8 +282,8 @@ serve(async (req: Request) => {
       });
     }
     
-    // Set up the session cookie and redirect - redirect straight to dashboard!
-    const redirectUrl = new URL(`${FRONTEND_URL}/dashboard`);
+    // Set up the session cookie and redirect to the Netlify frontend URL
+    const redirectUrl = new URL(`${FRONTEND_URL}`); // Redirect to home page of Netlify site
     console.log("Redirecting to:", redirectUrl.toString());
     
     // Prepare headers with session cookie
@@ -320,8 +299,8 @@ serve(async (req: Request) => {
     // Clear the state cookie
     headers.append("Set-Cookie", "discord_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0");
 
-    console.log("Auth completed, redirecting to dashboard page");
-    // Final step: HTTP 302 Redirect to the dashboard
+    console.log("Auth completed, redirecting to Netlify site homepage");
+    // Final step: HTTP 302 Redirect to the Netlify site
     return new Response(null, {
       status: 302,
       headers,

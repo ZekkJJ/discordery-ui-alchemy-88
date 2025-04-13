@@ -31,6 +31,8 @@ serve(async (req: Request) => {
     authUrl.searchParams.append("scope", "identify guilds guilds.members.read guilds.join");
     authUrl.searchParams.append("state", state);
 
+    console.log("Redirecting to Discord OAuth:", authUrl.toString());
+
     // Store the state in a cookie that will be checked in the callback
     const headers = new Headers({ 
       "Location": authUrl.toString(),
