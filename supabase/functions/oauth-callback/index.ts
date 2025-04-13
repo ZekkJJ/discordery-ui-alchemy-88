@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
@@ -276,7 +277,6 @@ serve(async (req: Request) => {
     }
     
     // Set up the session cookie and redirect to the discord-auth page on the frontend
-    // Using the /discord-auth route instead of / for better handling of the auth state
     const redirectUrl = new URL(`${FRONTEND_URL}/discord-auth`);
     console.log("Redirecting to:", redirectUrl.toString());
     
@@ -297,7 +297,6 @@ serve(async (req: Request) => {
     });
 
     // Add cookies for auth
-    // These cookies need to be properly set for the frontend domain
     const cookieDomain = new URL(FRONTEND_URL).hostname;
     const isProd = !cookieDomain.includes('localhost');
     const cookieOptions = isProd 

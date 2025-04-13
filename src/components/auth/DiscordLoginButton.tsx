@@ -22,7 +22,6 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
       console.log("Initiating Discord login flow");
       
       // Redirect to our backend OAuth login function, not directly to Discord
-      // This edge function will then handle the redirect to Discord
       window.location.href = "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-login";
     } catch (error) {
       console.error("Login error:", error);

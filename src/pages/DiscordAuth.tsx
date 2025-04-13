@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
@@ -16,7 +16,6 @@ const DiscordAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -40,7 +39,7 @@ const DiscordAuth = () => {
           
           // Redirect to dashboard after a short delay
           setTimeout(() => {
-            navigate("/dashboard");
+            navigate("/");
           }, 1500);
           
           return;
@@ -50,6 +49,7 @@ const DiscordAuth = () => {
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (refreshData?.session) {
+          console.log("Successfully authenticated with Discord via refresh!");
           toast.success("Successfully authenticated with Discord!");
           
           // Show success dialog
@@ -57,7 +57,7 @@ const DiscordAuth = () => {
           
           // Redirect to dashboard after a short delay
           setTimeout(() => {
-            navigate("/dashboard");
+            navigate("/");
           }, 1500);
           
           return;
@@ -80,7 +80,7 @@ const DiscordAuth = () => {
     };
 
     checkSession();
-  }, [navigate, location]);
+  }, [navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -106,7 +106,7 @@ const DiscordAuth = () => {
           </div>
         ) : (
           <div className="text-green-400">
-            <p className="mb-4">Authentication successful! Redirecting to dashboard...</p>
+            <p className="mb-4">Authentication successful! Redirecting to home page...</p>
           </div>
         )}
       </div>
@@ -116,7 +116,7 @@ const DiscordAuth = () => {
           <DialogHeader>
             <DialogTitle>Authentication Successful</DialogTitle>
             <DialogDescription className="text-gray-300">
-              You have successfully connected your Discord account. Redirecting to dashboard...
+              You have successfully connected your Discord account. Redirecting to home page...
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
