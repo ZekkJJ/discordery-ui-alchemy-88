@@ -19,11 +19,12 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
       setIsLoading(true);
       toast.info("Connecting to Discord...");
       
-      // Log that we're initiating the login flow
-      console.log("Initiating Discord login flow");
+      // Use direct Discord OAuth URL with Netlify callback
+      const redirectUri = encodeURIComponent("https://sprightly-sawine-1d6202.netlify.app/discord-auth");
+      const scope = encodeURIComponent("identify guilds guilds.members.read guilds.join");
       
-      // Redirect to our backend OAuth login function
-      window.location.href = "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-login";
+      // Direct Discord OAuth URL
+      window.location.href = `https://discord.com/oauth2/authorize?client_id=1360393180482375691&response_type=code&redirect_uri=${redirectUri}&scope=${scope}`;
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Failed to connect to Discord. Please try again.");
