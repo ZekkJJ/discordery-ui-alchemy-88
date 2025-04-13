@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
@@ -6,6 +5,7 @@ import DiscordLoginButton from '../auth/DiscordLoginButton';
 import UserProfileDropdown from '../auth/UserProfileDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 const Navbar: React.FC = () => {
   const location = useLocation();

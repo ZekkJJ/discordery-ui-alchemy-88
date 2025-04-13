@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -21,7 +21,8 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
       // Log that we're initiating the login flow
       console.log("Initiating Discord login flow");
       
-      // Redirect to our OAuth login function
+      // Redirect to our backend OAuth login function, not directly to Discord
+      // This edge function will then handle the redirect to Discord
       window.location.href = "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-login";
     } catch (error) {
       console.error("Login error:", error);

@@ -4,8 +4,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // Discord OAuth URLs
 const DISCORD_AUTH_URL = "https://discord.com/oauth2/authorize";
 const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID") || "1360393180482375691";
-// This is the correct backend callback endpoint, not a frontend route
+// This must point to the backend callback URL, not a frontend route
 const REDIRECT_URI = "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-callback";
+const FRONTEND_URL = "https://sprightly-sawine-1d6202.netlify.app"; // Hardcoded frontend URL
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -40,6 +41,7 @@ serve(async (req: Request) => {
       ...corsHeaders
     });
 
+    // Return a 302 redirect to the Discord authorization URL
     return new Response(null, {
       status: 302,
       headers,
