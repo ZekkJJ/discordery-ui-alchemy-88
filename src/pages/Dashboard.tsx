@@ -41,6 +41,7 @@ const Dashboard = () => {
       
       if (userError || !userData?.access_token) {
         console.error("Error fetching user data:", userError);
+        
         // Try to get token from user metadata as fallback
         const discordId = session.user.user_metadata?.discord_id;
         if (discordId) {
@@ -71,15 +72,13 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Use Netlify function with the user's Discord access token
-      const response = await fetch("/.netlify/functions/discord-guilds", {
-        method: 'POST',
+      // Direct API call to Discord using the user's access token
+      const response = await fetch("https://discord.com/api/users/@me/guilds", {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          access_token: accessToken
-        })
+        }
       });
       
       if (!response.ok) {
@@ -88,9 +87,31 @@ const Dashboard = () => {
         throw new Error(errorText || "Failed to fetch servers");
       }
 
-      const data = await response.json();
-      console.log("Fetched guilds:", data);
-      setUserGuilds(data || []);
+      const guildsData = await response.json();
+      console.log("Fetched guilds from Discord API:", guildsData);
+      
+      // Filter to only show guilds where the user is the owner
+      const ownedGuilds = guildsData.filter(guild => guild.owner === true);
+      
+      // Check which guilds are already listed in our database
+      const { data: existingServers, error: serversError } = await supabase
+        .from('servers')
+        .select('discord_server_id');
+        
+      if (serversError) {
+        console.error('Error fetching existing servers:', serversError);
+      }
+      
+      // Create a set of already listed server IDs for quick lookup
+      const listedServerIds = new Set(existingServers?.map(server => server.discord_server_id) || []);
+      
+      // Attach isAlreadyListed flag to each guild
+      const enrichedGuilds = ownedGuilds.map(guild => ({
+        ...guild,
+        isAlreadyListed: listedServerIds.has(guild.id)
+      }));
+      
+      setUserGuilds(enrichedGuilds || []);
     } catch (error) {
       console.error("Error fetching guilds:", error);
       toast.error("Failed to load your Discord servers");
@@ -110,7 +131,15 @@ const Dashboard = () => {
     // Refresh guild list to update isAlreadyListed status
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      fetchUserGuilds(session.access_token);
+      const { data: userData } = await supabase
+        .from('users')
+        .select('access_token')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (userData?.access_token) {
+        fetchUserGuilds(userData.access_token);
+      }
     }
   };
 
