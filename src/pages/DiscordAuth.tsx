@@ -6,7 +6,7 @@ import { Loader } from "lucide-react";
 
 // Discord API constants
 const DISCORD_CLIENT_ID = "1360393180482375691";
-const REDIRECT_URI = "https://www.discordery.xyz/discord-auth";  // Update this with your Vercel app URL
+const REDIRECT_URI = "https://www.discordery.xyz/discord-auth";  // Updated to match the correct URI
 
 const DiscordAuth = () => {
   const [loading, setLoading] = useState(true);
