@@ -11,7 +11,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://hyoaegvyvmzpbvhtzb
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID") || "1360393180482375691";
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET");
-const REDIRECT_URI = Deno.env.get("DISCORD_REDIRECT_URI") || "https://sprightly-sawine-1d6202.netlify.app/discord-auth";
+// This must match exactly what is registered in Discord Developer Portal
+const REDIRECT_URI = Deno.env.get("DISCORD_REDIRECT_URI") || "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-callback";
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://sprightly-sawine-1d6202.netlify.app";
 
 // CORS headers for browser requests
@@ -193,7 +194,6 @@ serve(async (req: Request) => {
     
     // Set up the session cookie
     const redirectUrl = new URL(`${FRONTEND_URL}/dashboard`);
-    redirectUrl.searchParams.append('discord_id', userData.id);
     
     // Prepare headers with session cookie
     const headers = new Headers({
@@ -205,6 +205,7 @@ serve(async (req: Request) => {
     // Clear the state cookie
     headers.append("Set-Cookie", "discord_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0");
 
+    // Final step: HTTP 302 Redirect to the frontend
     return new Response(null, {
       status: 302,
       headers,
