@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,11 +88,9 @@ const DiscordAuth = () => {
           }
           
           console.log("Signup successful:", signUpData);
-          // Use the sign-up data
           var authData = signUpData;
         } else {
           console.log("Sign in successful:", signInData);
-          // Use the sign-in data
           var authData = signInData;
         }
         

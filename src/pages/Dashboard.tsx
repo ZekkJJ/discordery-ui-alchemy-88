@@ -42,18 +42,23 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Use the Supabase function instead of Netlify function
-      const { data, error } = await supabase.functions.invoke('user-guilds', {
-        method: 'GET',
+      // Use Netlify function instead of Supabase function
+      const response = await fetch("/.netlify/functions/discord-guilds", {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          access_token: accessToken
+        })
       });
       
-      if (error) {
-        throw new Error(error.message || "Failed to fetch servers");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to fetch servers");
       }
 
+      const data = await response.json();
       console.log("Fetched guilds:", data);
       setUserGuilds(data || []);
     } catch (error) {

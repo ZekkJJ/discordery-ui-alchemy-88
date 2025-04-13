@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -90,11 +89,11 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
         return;
       }
       
-      const response = await fetch(`https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/add-server`, {
+      const response = await fetch('/.netlify/functions/add-server', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           discordServerId: selectedGuild.id,
@@ -105,12 +104,12 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
         }),
       });
 
-      const responseData = await response.json();
-      
       if (!response.ok) {
-        throw new Error(responseData.error || "Failed to submit server");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit server");
       }
 
+      const responseData = await response.json();
       toast.success("Server submitted successfully! It will be reviewed before appearing in the directory.");
       
       // Reset form
