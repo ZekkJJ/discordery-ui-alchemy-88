@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,7 @@ import { Loader } from "lucide-react";
 
 // Discord API constants
 const DISCORD_CLIENT_ID = "1360393180482375691";
-const REDIRECT_URI = "https://sprightly-sawine-1d6202.netlify.app/discord-auth";
+const REDIRECT_URI = "https://your-vercel-app.vercel.app/discord-auth";  // Update this with your Vercel app URL
 
 const DiscordAuth = () => {
   const [loading, setLoading] = useState(true);
@@ -20,8 +19,8 @@ const DiscordAuth = () => {
       try {
         console.log("Exchanging code for token...");
         
-        // Exchange code for token using Netlify function
-        const tokenResponse = await fetch("/.netlify/functions/discord-token", {
+        // Exchange code for token using Vercel API route
+        const tokenResponse = await fetch("/api/discord-token", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -40,7 +39,7 @@ const DiscordAuth = () => {
         console.log("Token exchange successful");
         
         // Get user information from Discord API
-        const userResponse = await fetch("/.netlify/functions/discord-user", {
+        const userResponse = await fetch("/api/discord-user", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

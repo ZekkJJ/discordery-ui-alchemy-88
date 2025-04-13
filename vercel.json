@@ -1,0 +1,14 @@
+
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "env": {
+    "SUPABASE_URL": "https://eahmzxgmnyacbwahdanv.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhaG16eGdtbnlhY2J3YWhkYW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1ODM0NzAsImV4cCI6MjA2MDE1OTQ3MH0.5a8Gq0GUQKVXT5tBq2y5QAw9mVg2K4qsgtsIa5nR2mI",
+    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhaG16eGdtbnlhY2J3YWhkYW52Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDU4MzQ3MCwiZXhwIjoyMDYwMTU5NDcwfQ.nVJTrmTVB_BkSTOaBrWReoXRBy12xrzBQYNieLsq4fs",
+    "DISCORD_CLIENT_ID": "1360393180482375691"
+  }
+}

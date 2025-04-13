@@ -92,7 +92,7 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
       }
       
       // Submit server using the auth token directly
-      const response = await fetch('/.netlify/functions/add-server', {
+      const response = await fetch('/api/add-server', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
