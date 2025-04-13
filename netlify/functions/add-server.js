@@ -39,6 +39,7 @@ exports.handler = async (event) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
+    console.log("Token received:", token ? "Present (length: " + token.length + ")" : "Missing");
 
     // Validate required fields
     if (!discordServerId || !description || !inviteLink || !tags || !category) {
@@ -52,13 +53,85 @@ exports.handler = async (event) => {
       };
     }
 
+    // Try to get user from Supabase first using the token
+    const SUPABASE_URL = process.env.SUPABASE_URL || "https://hyoaegvyvmzpbvhtzbpv.supabase.co";
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Server configuration error" }),
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      };
+    }
+    
+    // Create a Supabase client
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Verify the user's session first
+    const { data: { user: supabaseUser }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !supabaseUser) {
+      console.error('Authentication error:', authError);
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ 
+          error: "Authentication failed",
+          details: authError?.message || "Invalid token" 
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      };
+    }
+    
+    // Get Discord token from user record
+    const { data: userData, error: userDataError } = await supabase
+      .from('users')
+      .select('access_token, id, discord_id')
+      .eq('id', supabaseUser.id)
+      .single();
+      
+    if (userDataError) {
+      console.error('Error fetching user data:', userDataError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ 
+          error: "Failed to retrieve user data",
+          details: userDataError.message
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      };
+    }
+    
+    if (!userData || !userData.access_token) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: "Discord token not found for this user" }),
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      };
+    }
+    
+    const discordToken = userData.access_token;
+
     // Get Discord server details
     const DISCORD_API_URL = `https://discord.com/api/guilds/${discordServerId}`;
 
     // Fetch server info from Discord using the Discord token
     const guildResponse = await fetch(`${DISCORD_API_URL}?with_counts=true`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${discordToken}`,
       },
     });
 
@@ -80,64 +153,17 @@ exports.handler = async (event) => {
     // Get Discord server data
     const serverData = await guildResponse.json();
     
-    // Get user info from Discord
-    const userResponse = await fetch("https://discord.com/api/users/@me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!userResponse.ok) {
-      const errorText = await userResponse.text();
-      return {
-        statusCode: userResponse.status,
-        body: JSON.stringify({ 
-          error: "Failed to fetch user info from Discord",
-          details: errorText
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      };
-    }
-
-    const userData = await userResponse.json();
-    
-    // Connect to Supabase
-    const SUPABASE_URL = process.env.SUPABASE_URL || "https://hyoaegvyvmzpbvhtzbpv.supabase.co";
-    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!SUPABASE_SERVICE_ROLE_KEY) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Server configuration error" }),
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      };
-    }
-    
-    // Create a Supabase client
-    const { createClient } = require('@supabase/supabase-js');
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Get user info from Supabase
-    const { data: userInfo, error: userError } = await supabase
-      .from('users')
+    // Check if server already exists in database
+    const { data: existingServer, error: checkError } = await supabase
+      .from('servers')
       .select('id')
-      .eq('discord_id', userData.id)
+      .eq('discord_server_id', discordServerId)
       .single();
-    
-    if (userError) {
-      console.error('Error fetching user info:', userError);
+      
+    if (existingServer) {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ 
-          error: "Failed to find user in database",
-          details: userError.message
-        }),
+        statusCode: 409,
+        body: JSON.stringify({ error: "This server is already listed in the directory" }),
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
@@ -155,8 +181,8 @@ exports.handler = async (event) => {
       invite_link: inviteLink,
       tags: tags,
       category: category,
-      owner_id: userInfo.id,
-      submitted_by_discord_id: userData.id,
+      owner_id: userData.id,
+      submitted_by_discord_id: userData.discord_id,
       member_count: serverData.approximate_member_count || 0,
       online_count: serverData.approximate_presence_count || 0,
       is_approved: false // Default to false, admin needs to approve

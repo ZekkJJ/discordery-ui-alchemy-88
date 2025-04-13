@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -85,40 +84,19 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
     try {
       setLoadingSubmit(true);
       
+      // Get current auth session token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Your session has expired. Please login again");
         return;
       }
       
-      // Get user ID and Discord ID for token lookup
-      const userId = session.user.id;
-      const discordId = session.user.user_metadata?.discord_id;
-      
-      // Get Discord token via Netlify function
-      const tokenResponse = await fetch("/.netlify/functions/discord-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          discordId
-        }),
-      });
-      
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to retrieve your Discord token. Please try logging in again.");
-      }
-      
-      const tokenData = await tokenResponse.json();
-      
-      // Submit server using the Netlify function with Discord access token in the request
+      // Submit server using the auth token directly
       const response = await fetch('/.netlify/functions/add-server', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokenData.access_token}` // Use Discord token, not session token
+          'Authorization': `Bearer ${session.access_token}` // Use Supabase session token
         },
         body: JSON.stringify({
           discordServerId: selectedGuild.id,
@@ -129,12 +107,12 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
         }),
       });
 
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit server");
+        throw new Error(responseData.error || responseData.details || "Failed to submit server");
       }
 
-      const responseData = await response.json();
       toast.success("Server submitted successfully! It will be reviewed before appearing in the directory.");
       
       // Reset form
