@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const DiscordLoginButton = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -8,10 +9,12 @@ const DiscordLoginButton = () => {
   const handleLogin = async () => {
     try {
       setIsLoading(true);
+      toast.info("Connecting to Discord...");
       // Redirect to our OAuth login function
       window.location.href = "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-login";
     } catch (error) {
       console.error("Login error:", error);
+      toast.error("Failed to connect to Discord. Please try again.");
       setIsLoading(false);
     }
   };
@@ -19,10 +22,10 @@ const DiscordLoginButton = () => {
   return (
     <Button
       onClick={handleLogin}
-      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+      className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
       disabled={isLoading}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 justify-center">
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         ) : (

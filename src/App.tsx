@@ -9,6 +9,7 @@ import Explore from "./pages/Explore";
 import ServerDetail from "./pages/ServerDetail";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import DiscordAuth from "./pages/DiscordAuth";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/explore" element={<Explore />} />
           <Route path="/server/:serverId" element={<ServerDetail />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/discord-auth" element={<DiscordAuth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

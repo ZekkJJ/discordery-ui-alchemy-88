@@ -29,6 +29,14 @@ serve(async (req: Request) => {
 
   try {
     // Create a Supabase client with admin privileges
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY is not set");
+      return new Response(JSON.stringify({ error: "Server configuration error" }), { 
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
@@ -144,7 +152,7 @@ serve(async (req: Request) => {
       .from('users')
       .select('*')
       .eq('discord_id', userData.id)
-      .single();
+      .maybeSingle();
 
     if (userQueryError && userQueryError.code !== 'PGRST116') {
       console.error('Error checking for existing user:', userQueryError);
@@ -185,7 +193,7 @@ serve(async (req: Request) => {
         });
       }
       
-      userId = newUser[0].id;
+      userId = newUser?.[0]?.id;
     } else {
       console.log("Updating existing user record");
       const { data: updatedUser, error: updateError } = await supabase
@@ -207,17 +215,22 @@ serve(async (req: Request) => {
 
     console.log("Creating auth session");
     // Create a session using Supabase Auth
-    const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: `${userData.id}@discord.user`,
-      password: "discord-oauth-user", // Using a fixed password since we're authenticating via Discord
+    const email = `${userData.id}@discord.user`;
+    const password = "discord-oauth-user"; // Using a fixed password since we're authenticating via Discord
+    
+    // Try to sign in first
+    let sessionData;
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
     });
 
     // If the user doesn't exist yet in auth, create them
-    if (signInError && signInError.message.includes("Invalid login credentials")) {
-      console.log("Creating new auth user");
+    if (signInError) {
+      console.log("Sign in failed, creating new auth user", signInError.message);
       const { data: newAuthUser, error: signUpError } = await supabase.auth.admin.createUser({
-        email: `${userData.id}@discord.user`,
-        password: "discord-oauth-user",
+        email: email,
+        password: password,
         email_confirm: true,
         user_metadata: {
           discord_id: userData.id,
@@ -228,7 +241,7 @@ serve(async (req: Request) => {
 
       if (signUpError) {
         console.error('Error creating auth user:', signUpError);
-        return new Response(JSON.stringify({ error: 'Failed to create auth user' }), {
+        return new Response(JSON.stringify({ error: 'Failed to create auth user', details: signUpError.message }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders }
         });
@@ -236,13 +249,16 @@ serve(async (req: Request) => {
 
       // Try signin again after creating user
       const { data: retrySessionData, error: retrySignInError } = await supabase.auth.signInWithPassword({
-        email: `${userData.id}@discord.user`,
-        password: "discord-oauth-user",
+        email: email,
+        password: password,
       });
 
       if (retrySignInError) {
         console.error('Error signing in after user creation:', retrySignInError);
-        return new Response(JSON.stringify({ error: 'Failed to sign in after user creation' }), {
+        return new Response(JSON.stringify({ 
+          error: 'Failed to sign in after user creation', 
+          details: retrySignInError.message 
+        }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders }
         });
@@ -250,19 +266,23 @@ serve(async (req: Request) => {
       
       // Use the new session data
       sessionData = retrySessionData;
-    } else if (signInError) {
-      console.error('Error creating session:', signInError);
-      return new Response(JSON.stringify({ error: 'Failed to create session' }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      });
+    } else {
+      sessionData = signInData;
     }
 
     // Get session info to set cookie
     console.log("Setting up redirect with auth token");
     
+    if (!sessionData?.session?.access_token) {
+      console.error("Failed to get valid session token");
+      return new Response(JSON.stringify({ error: 'Failed to create valid session token' }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    
     // Set up the session cookie and redirect
-    const redirectUrl = new URL(`${FRONTEND_URL}/dashboard`);
+    const redirectUrl = new URL(`${FRONTEND_URL}/discord-auth`);
     redirectUrl.searchParams.set("discord_id", userData.id);
     
     // Prepare headers with session cookie
@@ -278,7 +298,7 @@ serve(async (req: Request) => {
     // Clear the state cookie
     headers.append("Set-Cookie", "discord_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0");
 
-    console.log("Auth completed, redirecting to dashboard");
+    console.log("Auth completed, redirecting to discord-auth page");
     // Final step: HTTP 302 Redirect to the frontend
     return new Response(null, {
       status: 302,
