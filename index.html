@@ -3,25 +3,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Discordery - Discover the Best Discord Servers and Bots</title>
-    <meta name="description" content="Find and join the perfect Discord servers and bots for gaming, education, art, music, or whatever community you're looking for." />
-    <meta name="author" content="Discordery" />
-
-    <meta property="og:title" content="Discordery - Discover the Best Discord Servers and Bots" />
-    <meta property="og:description" content="Find and join the perfect Discord servers and bots for gaming, education, art, music, or whatever community you're looking for." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <title>Discordery - Discover the best Discord servers</title>
+    <meta name="description" content="Explore and discover the best Discord servers for gaming, education, programming, art, music, and more." />
+    <script>
+      // Force reload once to ensure session cookies are processed
+      if (window.location.pathname === '/' && localStorage.getItem('auth_reload_needed') === 'true') {
+        localStorage.removeItem('auth_reload_needed');
+        console.log('Reloading to process authentication cookies...');
+        window.location.reload();
+      } else if (window.location.pathname === '/discord-auth') {
+        localStorage.setItem('auth_reload_needed', 'true');
+      }
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
