@@ -19,8 +19,8 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
       setIsLoading(true);
       toast.info("Connecting to Discord...");
       
-      // Use direct Discord OAuth URL with Netlify callback
-      const redirectUri = encodeURIComponent("https://sprightly-sawine-1d6202.netlify.app/discord-auth");
+      // Use direct Discord OAuth URL with correct callback
+      const redirectUri = encodeURIComponent("https://www.discordery.xyz/discord-auth");
       const scope = encodeURIComponent("identify guilds guilds.members.read guilds.join");
       
       // Direct Discord OAuth URL
