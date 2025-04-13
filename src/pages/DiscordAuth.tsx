@@ -23,21 +23,58 @@ const DiscordAuth = () => {
       try {
         setLoading(true);
         
-        // Check if we're already logged in with Supabase
-        const { data: { session } } = await supabase.auth.getSession();
+        // Get hash params from URL if any (some auth providers use hash instead of query)
+        const hashParams = new URLSearchParams(location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
         
+        // Check if we're already logged in with Supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw new Error(`Session error: ${sessionError.message}`);
+        }
+        
+        // If we have a session, we can navigate to the dashboard
         if (session) {
-          // Show success dialog
-          setShowDialog(true);
+          console.log("Successfully authenticated with Discord!");
           toast.success("Successfully authenticated with Discord!");
           
-          // Redirect to dashboard
+          // Show success dialog
+          setShowDialog(true);
+          
+          // Redirect to dashboard after a short delay
           setTimeout(() => {
             navigate("/dashboard");
           }, 1500);
-        } else {
-          throw new Error("No session found. Authentication failed.");
+          
+          return;
         }
+        
+        // If we don't have a session yet, try to see if we can set it up from cookies
+        // This helps with auth flows that rely on redirect
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshData?.session) {
+          toast.success("Successfully authenticated with Discord!");
+          
+          // Show success dialog
+          setShowDialog(true);
+          
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+          
+          return;
+        }
+        
+        if (refreshError) {
+          console.error("Auth refresh error:", refreshError);
+        }
+        
+        // If we still don't have a session, show an error
+        throw new Error("No session found. Authentication failed. Please try logging in again.");
+        
       } catch (err) {
         console.error("Auth session check error:", err);
         setError(err instanceof Error ? err.message : "Authentication failed");
@@ -48,7 +85,7 @@ const DiscordAuth = () => {
     };
 
     checkSession();
-  }, [navigate]);
+  }, [navigate, location]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 to-gray-800">

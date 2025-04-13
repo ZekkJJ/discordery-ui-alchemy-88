@@ -17,6 +17,10 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
     try {
       setIsLoading(true);
       toast.info("Connecting to Discord...");
+      
+      // Log that we're initiating the login flow
+      console.log("Initiating Discord login flow");
+      
       // Redirect to our OAuth login function
       window.location.href = "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-login";
     } catch (error) {
@@ -29,7 +33,11 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
   const handleLogout = async () => {
     try {
       setIsLoading(true);
-      await supabase.auth.signOut();
+      console.log("Logging out user");
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast.success("Logged out successfully");
       if (onLogout) {
         onLogout();

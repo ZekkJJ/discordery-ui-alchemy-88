@@ -18,13 +18,17 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
+        console.log("Auth state changed:", event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
         // If user just signed in, fetch their profile data
-        if (event === 'SIGNED_IN' && newSession?.user) {
-          fetchUserData(newSession.user.id);
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
+          // Use setTimeout to avoid potential deadlocks with Supabase auth
+          setTimeout(() => {
+            fetchUserData(newSession.user.id);
+          }, 0);
         }
         
         // Clear user data on sign out
@@ -38,13 +42,21 @@ const Navbar: React.FC = () => {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        // First try to get existing session
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          setIsLoading(false);
+          return;
+        }
         
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          fetchUserData(currentSession.user.id);
+          await fetchUserData(currentSession.user.id);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
@@ -62,28 +74,109 @@ const Navbar: React.FC = () => {
   
   const fetchUserData = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      console.log("Fetching user data for ID:", userId);
+      
+      // Get email from the user object for matching
+      const { data: authUser } = await supabase.auth.getUser();
+      const userEmail = authUser?.user?.email;
+      
+      if (!userEmail) {
+        console.log("No user email found, trying fallback approach");
+        // Try a fallback approach with the user ID
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error fetching user data by ID:", error);
+          return;
+        }
+        
+        if (data) {
+          console.log("User data found by ID");
+          setUserData(data);
+          return;
+        }
+      }
+      
+      // If we have an email from auth, try to find the user by email
+      if (userEmail) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', userEmail)
+          .maybeSingle();
+          
+        if (error) {
+          console.error("Error fetching user data by email:", error);
+          return;
+        }
+        
+        if (data) {
+          console.log("User data found by email");
+          setUserData(data);
+          return;
+        }
+      }
+      
+      // If we still don't have data, try to find by discord_id derived from auth metadata
+      if (authUser?.user?.user_metadata?.discord_id) {
+        const discordId = authUser.user.user_metadata.discord_id;
+        console.log("Trying to find user by Discord ID:", discordId);
+        
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('discord_id', discordId)
+          .maybeSingle();
+          
+        if (error) {
+          console.error("Error fetching user data by Discord ID:", error);
+          return;
+        }
+        
+        if (data) {
+          console.log("User data found by Discord ID");
+          setUserData(data);
+          return;
+        }
+      }
+      
+      // Last resort, try to query all users and find a match
+      console.log("No user data found, fetching all users for debug");
+      const { data: allUsers, error: allUsersError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .limit(10);
         
-      if (error) {
-        console.error("Error fetching user data:", error);
+      if (allUsersError) {
+        console.error("Error fetching all users:", allUsersError);
         return;
       }
       
-      setUserData(data);
+      console.log("Available users in database:", allUsers?.length || 0);
+      
     } catch (error) {
       console.error("Failed to fetch user data:", error);
     }
   };
   
-  const handleLogout = () => {
-    setUser(null);
-    setSession(null);
-    setUserData(null);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setUser(null);
+      setSession(null);
+      setUserData(null);
+      toast.success("Logged out successfully");
+      navigate('/');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    }
   };
   
   const getAvatarUrl = () => {
@@ -117,7 +210,7 @@ const Navbar: React.FC = () => {
               >
                 Explore
               </Link>
-              {user && (
+              {(user || userData) && (
                 <Link 
                   to="/dashboard" 
                   className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
