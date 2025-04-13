@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,7 @@ import { Loader } from "lucide-react";
 
 // Discord API constants
 const DISCORD_CLIENT_ID = "1360393180482375691";
-const REDIRECT_URI = "https://www.discordery.xyz/discord-auth";  // Updated to match the correct URI
+const REDIRECT_URI = "https://www.discordery.xyz/discord-auth";
 
 const DiscordAuth = () => {
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,9 @@ const DiscordAuth = () => {
         });
         
         if (!tokenResponse.ok) {
-          throw new Error(`Token exchange failed: ${await tokenResponse.text()}`);
+          const errorText = await tokenResponse.text();
+          console.error("Token exchange failed:", errorText);
+          throw new Error(`Token exchange failed: ${errorText}`);
         }
         
         const tokenResult = await tokenResponse.json();
@@ -50,7 +53,9 @@ const DiscordAuth = () => {
         });
         
         if (!userResponse.ok) {
-          throw new Error(`User data fetch failed: ${await userResponse.text()}`);
+          const errorText = await userResponse.text();
+          console.error("User data fetch failed:", errorText);
+          throw new Error(`User data fetch failed: ${errorText}`);
         }
         
         const userData = await userResponse.json();
