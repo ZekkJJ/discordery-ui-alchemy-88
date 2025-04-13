@@ -8,10 +8,11 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Settings, PlusCircle } from "lucide-react";
+import { ChevronDown, Settings, PlusCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface UserProfileDropdownProps {
   username: string;
@@ -43,23 +44,25 @@ const UserProfileDropdown = ({ username, avatarUrl, onLogout }: UserProfileDropd
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 hover:bg-gray-800 rounded-lg">
-          {avatarUrl ? (
-            <img 
-              src={avatarUrl} 
-              alt={username} 
-              className="w-8 h-8 rounded-full"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center">
-              {username.substring(0, 1).toUpperCase()}
-            </div>
-          )}
+          <Avatar className="h-8 w-8">
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={username} />
+            ) : (
+              <AvatarFallback className="bg-indigo-600 text-white">
+                {username.substring(0, 1).toUpperCase()}
+              </AvatarFallback>
+            )}
+          </Avatar>
           <span className="hidden sm:inline text-white font-medium">{username}</span>
           <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-56 bg-gray-800 border border-gray-700 text-white p-1">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-56 bg-gray-800 border border-gray-700 text-white p-1 z-50"
+        sideOffset={5}
+      >
         <div className="px-2 py-1.5 text-sm font-semibold">
           Signed in as <span className="text-indigo-400">{username}</span>
         </div>
@@ -85,9 +88,10 @@ const UserProfileDropdown = ({ username, avatarUrl, onLogout }: UserProfileDropd
         
         <DropdownMenuItem 
           onClick={handleLogout}
-          className="text-red-400 cursor-pointer hover:bg-gray-700 hover:text-red-300 focus:bg-gray-700 focus:text-red-300"
+          className="flex items-center gap-2 text-red-400 cursor-pointer hover:bg-gray-700 hover:text-red-300 focus:bg-gray-700 focus:text-red-300"
         >
-          Log Out
+          <LogOut className="w-4 h-4" />
+          <span>Log Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
