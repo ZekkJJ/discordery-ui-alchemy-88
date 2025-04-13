@@ -93,19 +93,23 @@ const DiscordAuth = () => {
         
         console.log("Authentication successful:", authData);
         
-        // Store user data in Supabase database
-        const { error: upsertError } = await supabase.from("users").upsert({
-          id: authData.user?.id,
-          discord_id: userData.id,
-          discord_username: userData.username,
-          email: userData.email,
-          discriminator: userData.discriminator || null,
-          avatar: userData.avatar,
-          access_token: tokenResult.access_token,
-          refresh_token: tokenResult.refresh_token,
-          token_expires_at: new Date(Date.now() + (tokenResult.expires_in * 1000)).toISOString()
-        }, { 
-          onConflict: "discord_id"
+        // First get the current user's ID from the auth session
+        const userId = authData.user?.id;
+        if (!userId) {
+          throw new Error("Failed to get user ID from auth session");
+        }
+
+        // Store user data in Supabase database using RPC function to bypass RLS
+        const { error: upsertError } = await supabase.rpc('upsert_user_data', {
+          p_id: userId,
+          p_discord_id: userData.id,
+          p_discord_username: userData.username,
+          p_email: userData.email,
+          p_discriminator: userData.discriminator || null,
+          p_avatar: userData.avatar,
+          p_access_token: tokenResult.access_token,
+          p_refresh_token: tokenResult.refresh_token,
+          p_token_expires_at: new Date(Date.now() + (tokenResult.expires_in * 1000)).toISOString()
         });
         
         if (upsertError) {

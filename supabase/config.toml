@@ -13,3 +13,7 @@ verify_jwt = true
 
 [functions.add-server]
 verify_jwt = true
+
+[functions.upsert-user-function]
+verify_jwt = true
+
