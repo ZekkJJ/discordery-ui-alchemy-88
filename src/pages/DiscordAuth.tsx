@@ -7,9 +7,6 @@ import { Loader } from "lucide-react";
 
 // Discord API constants
 const DISCORD_CLIENT_ID = "1360393180482375691";
-const DISCORD_CLIENT_SECRET = ""; // Must be set in Netlify environment variables
-const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
-const DISCORD_USER_URL = "https://discord.com/api/users/@me";
 const REDIRECT_URI = "https://sprightly-sawine-1d6202.netlify.app/discord-auth";
 
 const DiscordAuth = () => {
@@ -23,15 +20,7 @@ const DiscordAuth = () => {
       try {
         console.log("Exchanging code for token...");
         
-        // Create form data for token exchange
-        const tokenData = new URLSearchParams();
-        tokenData.append("client_id", DISCORD_CLIENT_ID);
-        tokenData.append("client_secret", DISCORD_CLIENT_SECRET);
-        tokenData.append("grant_type", "authorization_code");
-        tokenData.append("code", code);
-        tokenData.append("redirect_uri", REDIRECT_URI);
-        
-        // Exchange code for token using Netlify function (to be created)
+        // Exchange code for token using Netlify function
         const tokenResponse = await fetch("/.netlify/functions/discord-token", {
           method: "POST",
           headers: {
@@ -66,77 +55,69 @@ const DiscordAuth = () => {
         }
         
         const userData = await userResponse.json();
-        console.log("User data fetch successful");
+        console.log("User data fetch successful:", userData);
         
         // Create email format for Supabase (using Discord ID)
         const email = `${userData.id}@discord.user`;
+        const password = "discord-oauth-user"; // Common password for Discord OAuth users
         
-        // Sign in with Supabase (magic link - passwordless)
-        console.log("Signing in with Supabase...");
-        
-        // Create or sign in user with Supabase
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        // Sign up user first
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
-          password: "discord-oauth-user", // Common password for Discord OAuth users
-        });
-        
-        if (authError) {
-          // If user doesn't exist, sign them up
-          if (authError.message.includes("Invalid login credentials")) {
-            console.log("User doesn't exist, creating new account");
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email,
-              password: "discord-oauth-user",
-              options: {
-                data: {
-                  discord_id: userData.id,
-                  discord_username: userData.username,
-                  provider: "discord",
-                  avatar: userData.avatar
-                }
-              }
-            });
-            
-            if (signUpError) {
-              throw new Error(`Signup failed: ${signUpError.message}`);
-            }
-            
-            // Store user data in Supabase database
-            await supabase.from("users").upsert({
+          password,
+          options: {
+            data: {
               discord_id: userData.id,
               discord_username: userData.username,
-              email: userData.email,
-              discriminator: userData.discriminator || null,
-              avatar: userData.avatar,
-              access_token: tokenResult.access_token,
-              refresh_token: tokenResult.refresh_token,
-              token_expires_at: new Date(Date.now() + (tokenResult.expires_in * 1000)).toISOString()
-            }, { onConflict: "discord_id" });
-            
-            toast.success("Account created successfully!");
-          } else {
-            throw new Error(`Authentication failed: ${authError.message}`);
+              provider: "discord",
+              avatar: userData.avatar
+            }
           }
-        } else {
-          console.log("User authenticated successfully");
+        });
+        
+        let authData;
+        
+        // If user already exists, sign in instead
+        if (signUpError && signUpError.message.includes("already")) {
+          console.log("User exists, signing in instead");
+          const { data, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
           
-          // Update user data in database
-          await supabase.from("users").upsert({
-            discord_id: userData.id,
-            discord_username: userData.username,
-            email: userData.email,
-            discriminator: userData.discriminator || null,
-            avatar: userData.avatar,
-            access_token: tokenResult.access_token,
-            refresh_token: tokenResult.refresh_token,
-            token_expires_at: new Date(Date.now() + (tokenResult.expires_in * 1000)).toISOString()
-          }, { onConflict: "discord_id" });
+          if (signInError) throw new Error(`Authentication failed: ${signInError.message}`);
+          authData = data;
+        } else {
+          authData = signUpData;
         }
         
-        // Success - reload to process auth state change
+        console.log("Authentication successful:", authData);
+        
+        // Store user data in Supabase database
+        const { error: upsertError } = await supabase.from("users").upsert({
+          id: authData.user?.id,
+          discord_id: userData.id,
+          discord_username: userData.username,
+          email: userData.email,
+          discriminator: userData.discriminator || null,
+          avatar: userData.avatar,
+          access_token: tokenResult.access_token,
+          refresh_token: tokenResult.refresh_token,
+          token_expires_at: new Date(Date.now() + (tokenResult.expires_in * 1000)).toISOString()
+        }, { 
+          onConflict: "discord_id"
+        });
+        
+        if (upsertError) {
+          console.error("Error storing user data:", upsertError);
+          throw new Error(`Failed to store user data: ${upsertError.message}`);
+        }
+        
+        console.log("User data stored successfully");
+        
+        // Success - redirect to home
         toast.success("Successfully authenticated with Discord!");
-        localStorage.setItem("auth_reload_needed", "true");
-        window.location.href = "/";
+        navigate("/");
       } catch (err) {
         console.error("Auth error:", err);
         setError(err instanceof Error ? err.message : "Authentication failed");
