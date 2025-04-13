@@ -23,10 +23,6 @@ const DiscordAuth = () => {
       try {
         setLoading(true);
         
-        // Get hash params from URL if any (some auth providers use hash instead of query)
-        const hashParams = new URLSearchParams(location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        
         // Check if we're already logged in with Supabase
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -51,7 +47,6 @@ const DiscordAuth = () => {
         }
         
         // If we don't have a session yet, try to see if we can set it up from cookies
-        // This helps with auth flows that rely on redirect
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (refreshData?.session) {
