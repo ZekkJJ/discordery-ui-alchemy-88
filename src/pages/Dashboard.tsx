@@ -32,7 +32,36 @@ const Dashboard = () => {
         return;
       }
       
-      fetchUserGuilds(session.access_token);
+      // Fetch the current user data to get their Discord access token
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('access_token')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (userError || !userData?.access_token) {
+        console.error("Error fetching user data:", userError);
+        // Try to get token from user metadata as fallback
+        const discordId = session.user.user_metadata?.discord_id;
+        if (discordId) {
+          const { data: discordUser } = await supabase
+            .from('users')
+            .select('access_token')
+            .eq('discord_id', discordId)
+            .single();
+            
+          if (discordUser?.access_token) {
+            fetchUserGuilds(discordUser.access_token);
+          } else {
+            toast.error("Could not retrieve your Discord token. Please try logging in again.");
+          }
+        } else {
+          toast.error("Could not retrieve your Discord token. Please try logging in again.");
+        }
+        return;
+      }
+      
+      fetchUserGuilds(userData.access_token);
     };
     
     checkAuth();
@@ -42,7 +71,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Use Netlify function instead of Supabase function
+      // Use Netlify function with the user's Discord access token
       const response = await fetch("/.netlify/functions/discord-guilds", {
         method: 'POST',
         headers: {
@@ -55,6 +84,7 @@ const Dashboard = () => {
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error("Failed to fetch guilds:", response.status, errorText);
         throw new Error(errorText || "Failed to fetch servers");
       }
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +68,8 @@ const DiscordAuth = () => {
           password,
         });
         
+        let authData;
+        
         if (signInError) {
           console.log("Sign in failed, attempting signup instead:", signInError.message);
           // If user doesn't exist, sign up instead
@@ -88,10 +91,10 @@ const DiscordAuth = () => {
           }
           
           console.log("Signup successful:", signUpData);
-          var authData = signUpData;
+          authData = signUpData;
         } else {
           console.log("Sign in successful:", signInData);
-          var authData = signInData;
+          authData = signInData;
         }
         
         // First get the current user's ID from the auth session
