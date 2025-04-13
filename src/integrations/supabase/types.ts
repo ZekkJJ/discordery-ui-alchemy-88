@@ -9,7 +9,116 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      servers: {
+        Row: {
+          banner: string | null
+          category: string
+          created_at: string | null
+          discord_server_id: string
+          icon: string | null
+          id: string
+          invite_link: string
+          is_approved: boolean | null
+          long_description: string | null
+          member_count: number | null
+          name: string
+          online_count: number | null
+          owner_id: string | null
+          short_description: string
+          submitted_by_discord_id: string
+          tags: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          banner?: string | null
+          category: string
+          created_at?: string | null
+          discord_server_id: string
+          icon?: string | null
+          id?: string
+          invite_link: string
+          is_approved?: boolean | null
+          long_description?: string | null
+          member_count?: number | null
+          name: string
+          online_count?: number | null
+          owner_id?: string | null
+          short_description: string
+          submitted_by_discord_id: string
+          tags: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          banner?: string | null
+          category?: string
+          created_at?: string | null
+          discord_server_id?: string
+          icon?: string | null
+          id?: string
+          invite_link?: string
+          is_approved?: boolean | null
+          long_description?: string | null
+          member_count?: number | null
+          name?: string
+          online_count?: number | null
+          owner_id?: string | null
+          short_description?: string
+          submitted_by_discord_id?: string
+          tags?: string[]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servers_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          access_token: string | null
+          avatar: string | null
+          created_at: string | null
+          discord_id: string
+          discord_username: string
+          discriminator: string | null
+          email: string | null
+          id: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          avatar?: string | null
+          created_at?: string | null
+          discord_id: string
+          discord_username: string
+          discriminator?: string | null
+          email?: string | null
+          id?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          avatar?: string | null
+          created_at?: string | null
+          discord_id?: string
+          discord_username?: string
+          discriminator?: string | null
+          email?: string | null
+          id?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
