@@ -13,7 +13,6 @@ const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID") || "1360393180482375
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET");
 // This must match exactly what is registered in Discord Developer Portal
 const REDIRECT_URI = Deno.env.get("DISCORD_REDIRECT_URI") || "https://hyoaegvyvmzpbvhtzbpv.supabase.co/functions/v1/oauth-callback";
-const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://sprightly-sawine-1d6202.netlify.app";
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -24,10 +23,33 @@ const corsHeaders = {
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    // Determine the frontend URL dynamically based on the request
+    const requestUrl = new URL(req.url);
+    const referer = req.headers.get('referer') || '';
+    const origin = req.headers.get('origin') || '';
+    
+    // Try to get the frontend URL from different sources
+    let FRONTEND_URL = Deno.env.get("FRONTEND_URL");
+    
+    if (!FRONTEND_URL) {
+      // If no explicit FRONTEND_URL is set, try to determine it from the request
+      if (origin) {
+        FRONTEND_URL = origin;
+      } else if (referer) {
+        const refererUrl = new URL(referer);
+        FRONTEND_URL = `${refererUrl.protocol}//${refererUrl.host}`;
+      } else {
+        // Default fallback - use the same origin as the request
+        FRONTEND_URL = `${requestUrl.protocol}//${requestUrl.host}`;
+      }
+      
+      console.log("Dynamically determined FRONTEND_URL:", FRONTEND_URL);
+    }
+    
     // Create a Supabase client with admin privileges
     if (!SUPABASE_SERVICE_ROLE_KEY) {
       console.error("SUPABASE_SERVICE_ROLE_KEY is not set");
@@ -284,6 +306,7 @@ serve(async (req: Request) => {
     // Set up the session cookie and redirect
     const redirectUrl = new URL(`${FRONTEND_URL}/discord-auth`);
     redirectUrl.searchParams.set("discord_id", userData.id);
+    console.log("Redirecting to:", redirectUrl.toString());
     
     // Prepare headers with session cookie
     const headers = new Headers({

@@ -60,6 +60,7 @@ const DiscordAuth = () => {
       handleAuth();
     } else {
       setLoading(false);
+      setError("Missing authentication parameters. Please try logging in again.");
     }
   }, [location, navigate]);
 
