@@ -17,6 +17,9 @@ interface ServerListProps {
 }
 
 const ServerList = ({ userGuilds, selectedGuild, onSelectGuild, loading }: ServerListProps) => {
+  // Filter to show only servers where user is the owner
+  const ownedGuilds = userGuilds.filter(guild => guild.owner === true);
+  
   return (
     <div className="bg-gray-800 rounded-lg p-6 h-full">
       <h2 className="text-xl font-semibold text-white mb-4">Your Discord Servers</h2>
@@ -25,11 +28,11 @@ const ServerList = ({ userGuilds, selectedGuild, onSelectGuild, loading }: Serve
         <div className="flex items-center justify-center p-8">
           <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      ) : userGuilds.length === 0 ? (
+      ) : ownedGuilds.length === 0 ? (
         <p className="text-gray-400 text-center py-4">No servers found where you are the owner.</p>
       ) : (
         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-          {userGuilds.map((guild) => (
+          {ownedGuilds.map((guild) => (
             <div 
               key={guild.id}
               onClick={() => !guild.isAlreadyListed && onSelectGuild(guild)}
@@ -37,7 +40,7 @@ const ServerList = ({ userGuilds, selectedGuild, onSelectGuild, loading }: Serve
                 selectedGuild?.id === guild.id 
                   ? 'bg-indigo-900 border-indigo-500' 
                   : guild.isAlreadyListed 
-                    ? 'bg-gray-700 border-gray-600 opacity-60' 
+                    ? 'bg-gray-700 border-gray-600 opacity-60 cursor-not-allowed' 
                     : 'bg-gray-700 border-gray-600 hover:border-gray-500'
               }`}
             >

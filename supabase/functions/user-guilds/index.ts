@@ -35,6 +35,15 @@ serve(async (req: Request) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
+    
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
     // Verify the user's session
@@ -52,14 +61,39 @@ serve(async (req: Request) => {
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (userDataError || !userData) {
+    if (userDataError) {
       console.error('User data error:', userDataError);
-      return new Response(JSON.stringify({ error: "User not found or database error" }), {
-        status: 404,
+      return new Response(JSON.stringify({ error: "Database error" }), {
+        status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders }
       });
+    }
+
+    if (!userData) {
+      // Try to find the user by discord_id from user metadata
+      if (user.user_metadata?.discord_id) {
+        const { data: discordUser, error: discordUserError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('discord_id', user.user_metadata.discord_id)
+          .maybeSingle();
+        
+        if (discordUserError) {
+          console.error('Discord user lookup error:', discordUserError);
+        } else if (discordUser) {
+          userData = discordUser;
+        }
+      }
+      
+      if (!userData) {
+        console.error('User not found in database');
+        return new Response(JSON.stringify({ error: "User not found or database error" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
     }
 
     // Check if token needs refreshing
@@ -77,6 +111,14 @@ serve(async (req: Request) => {
       }
 
       try {
+        if (!DISCORD_CLIENT_SECRET) {
+          console.error("Missing DISCORD_CLIENT_SECRET");
+          return new Response(JSON.stringify({ error: "Server configuration error (missing Discord secret)" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+
         const refreshResponse = await fetch(DISCORD_TOKEN_URL, {
           method: 'POST',
           headers: {
@@ -91,8 +133,12 @@ serve(async (req: Request) => {
         });
 
         if (!refreshResponse.ok) {
-          console.error('Token refresh failed:', await refreshResponse.text());
-          return new Response(JSON.stringify({ error: "Failed to refresh Discord token" }), {
+          const refreshErrorText = await refreshResponse.text();
+          console.error('Token refresh failed:', refreshErrorText);
+          return new Response(JSON.stringify({ 
+            error: "Failed to refresh Discord token",
+            details: refreshErrorText
+          }), {
             status: 500,
             headers: { "Content-Type": "application/json", ...corsHeaders }
           });
@@ -129,17 +175,24 @@ serve(async (req: Request) => {
     });
 
     if (!guildsResponse.ok) {
-      console.error('Failed to fetch guilds:', await guildsResponse.text());
-      return new Response(JSON.stringify({ error: "Failed to fetch guilds from Discord" }), {
+      const guildsErrorText = await guildsResponse.text();
+      console.error('Failed to fetch guilds:', guildsErrorText);
+      return new Response(JSON.stringify({ 
+        error: "Failed to fetch guilds from Discord",
+        details: guildsErrorText,
+        status: guildsResponse.status
+      }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
 
     const guildsData = await guildsResponse.json();
+    console.log(`Fetched ${guildsData.length} guilds from Discord`);
     
     // Filter guilds where user is the owner
-    const ownedGuilds = guildsData.filter(guild => (guild.owner === true));
+    const ownedGuilds = guildsData.filter(guild => guild.owner === true);
+    console.log(`User owns ${ownedGuilds.length} guilds`);
 
     // Check which guilds are already listed in our database
     const { data: existingServers, error: serversError } = await supabase
@@ -166,7 +219,10 @@ serve(async (req: Request) => {
     });
   } catch (error) {
     console.error("Error in user-guilds function:", error);
-    return new Response(JSON.stringify({ error: "Failed to process request" }), {
+    return new Response(JSON.stringify({ 
+      error: "Failed to process request",
+      details: error.message
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders }
     });

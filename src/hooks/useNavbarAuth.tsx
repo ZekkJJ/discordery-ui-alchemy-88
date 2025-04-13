@@ -15,7 +15,7 @@ export const useNavbarAuth = () => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log("Auth state changed:", event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
@@ -54,10 +54,11 @@ export const useNavbarAuth = () => {
         
         if (currentSession?.user) {
           await fetchUserData(currentSession.user.id);
+        } else {
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -71,103 +72,71 @@ export const useNavbarAuth = () => {
   
   const fetchUserData = async (userId: string) => {
     try {
+      setIsLoading(true);
       console.log("Fetching user data for ID:", userId);
       
-      // Get email from the user object for matching
+      // First try to get the user from the users table using the user's ID
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error fetching user data:", error);
+        // Continue to try other methods
+      } else if (data) {
+        console.log("User data found by ID:", data);
+        setUserData(data);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If no direct match by ID, try to match by Discord ID from metadata
       const { data: authUser } = await supabase.auth.getUser();
-      console.log("Auth user:", authUser);
-      
-      const userEmail = authUser?.user?.email;
-      const userMetadata = authUser?.user?.user_metadata;
-      
-      console.log("User email:", userEmail);
-      console.log("User metadata:", userMetadata);
-      
-      if (userMetadata?.discord_id) {
-        const discordId = userMetadata.discord_id;
-        console.log("Trying to find user by Discord ID from metadata:", discordId);
-        
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('discord_id', discordId)
-          .maybeSingle();
-          
-        if (error) {
-          console.error("Error fetching user data by Discord ID from metadata:", error);
-        } else if (data) {
-          console.log("User data found by Discord ID from metadata:", data);
-          setUserData(data);
-          return;
-        }
-      }
-      
-      if (!userEmail) {
-        console.log("No user email found, trying fallback approach");
-        // Try a fallback approach with the user ID
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error fetching user data by ID:", error);
-          return;
-        }
-        
-        if (data) {
-          console.log("User data found by ID");
-          setUserData(data);
-          return;
-        }
-      }
-      
-      // If we have an email from auth, try to find the user by email
-      if (userEmail) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', userEmail)
-          .maybeSingle();
-          
-        if (error) {
-          console.error("Error fetching user data by email:", error);
-          return;
-        }
-        
-        if (data) {
-          console.log("User data found by email");
-          setUserData(data);
-          return;
-        }
-      }
-      
-      // If we still don't have data, try to find by discord_id derived from auth metadata
       if (authUser?.user?.user_metadata?.discord_id) {
         const discordId = authUser.user.user_metadata.discord_id;
-        console.log("Trying to find user by Discord ID:", discordId);
+        console.log("Trying to find user by Discord ID from metadata:", discordId);
         
-        const { data, error } = await supabase
+        const { data: discordData, error: discordError } = await supabase
           .from('users')
           .select('*')
           .eq('discord_id', discordId)
           .maybeSingle();
           
-        if (error) {
-          console.error("Error fetching user data by Discord ID:", error);
-          return;
-        }
-        
-        if (data) {
-          console.log("User data found by Discord ID");
-          setUserData(data);
+        if (discordError) {
+          console.error("Error fetching user data by Discord ID:", discordError);
+        } else if (discordData) {
+          console.log("User data found by Discord ID:", discordData);
+          setUserData(discordData);
+          setIsLoading(false);
           return;
         }
       }
       
-      // Last resort, try to query all users and find a match
-      console.log("No user data found, fetching all users for debug");
+      // Finally, try to find by email as a last resort
+      if (authUser?.user?.email) {
+        console.log("Trying to find user by email:", authUser.user.email);
+        
+        const { data: emailData, error: emailError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', authUser.user.email)
+          .maybeSingle();
+          
+        if (emailError) {
+          console.error("Error fetching user data by email:", emailError);
+        } else if (emailData) {
+          console.log("User data found by email:", emailData);
+          setUserData(emailData);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // Debug: Log user metadata and available users
+      console.log("User metadata:", user?.user_metadata);
+      
       const { data: allUsers, error: allUsersError } = await supabase
         .from('users')
         .select('*')
@@ -175,18 +144,20 @@ export const useNavbarAuth = () => {
         
       if (allUsersError) {
         console.error("Error fetching all users:", allUsersError);
-        return;
+      } else {
+        console.log("Available users in database:", allUsers);
       }
       
-      console.log("Available users in database:", allUsers);
-      
+      setIsLoading(false);
     } catch (error) {
       console.error("Failed to fetch user data:", error);
+      setIsLoading(false);
     }
   };
   
   const handleLogout = async () => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
@@ -198,24 +169,31 @@ export const useNavbarAuth = () => {
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to log out. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Get avatar URL from userData if available
   const getAvatarUrl = () => {
-    if (!userData?.avatar) return undefined;
-    return `https://cdn.discordapp.com/avatars/${userData.discord_id}/${userData.avatar}.png`;
+    if (userData?.avatar && userData?.discord_id) {
+      return `https://cdn.discordapp.com/avatars/${userData.discord_id}/${userData.avatar}.png`;
+    }
+    return undefined;
   };
 
-  // If userData exists but avatar doesn't, try to get it from user_metadata
+  // Fall back to user_metadata for avatar if userData doesn't have it
   const fallbackAvatarUrl = () => {
-    if (userData && !userData.avatar && user?.user_metadata?.avatar) {
-      return `https://cdn.discordapp.com/avatars/${user.user_metadata.discord_id}/${user.user_metadata.avatar}.png`;
+    const metadata = user?.user_metadata;
+    if (metadata?.avatar && metadata?.discord_id) {
+      return `https://cdn.discordapp.com/avatars/${metadata.discord_id}/${metadata.avatar}.png`;
     }
     return undefined;
   };
 
   const username = userData?.discord_username || user?.user_metadata?.discord_username || "User";
   const avatarUrl = getAvatarUrl() || fallbackAvatarUrl();
+  const isAuthenticated = !!user;
 
   return {
     user,
@@ -225,6 +203,6 @@ export const useNavbarAuth = () => {
     username,
     avatarUrl,
     handleLogout,
-    isAuthenticated: !!user || !!userData
+    isAuthenticated
   };
 };
