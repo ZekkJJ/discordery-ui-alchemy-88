@@ -38,47 +38,62 @@ export type Database = {
       servers: {
         Row: {
           banner: string | null
+          category: string | null
           created_at: string
           discord_id: string
+          discord_server_id: string | null
           icon: string | null
           id: string
           invite_link: string
+          is_approved: boolean | null
           long_description: string | null
           member_count: number | null
           name: string
           online_count: number | null
           owner_id: string
           short_description: string
+          submitted_by_discord_id: string | null
+          tags: string[] | null
           updated_at: string
         }
         Insert: {
           banner?: string | null
+          category?: string | null
           created_at?: string
           discord_id: string
+          discord_server_id?: string | null
           icon?: string | null
           id?: string
           invite_link: string
+          is_approved?: boolean | null
           long_description?: string | null
           member_count?: number | null
           name: string
           online_count?: number | null
           owner_id: string
           short_description: string
+          submitted_by_discord_id?: string | null
+          tags?: string[] | null
           updated_at?: string
         }
         Update: {
           banner?: string | null
+          category?: string | null
           created_at?: string
           discord_id?: string
+          discord_server_id?: string | null
           icon?: string | null
           id?: string
           invite_link?: string
+          is_approved?: boolean | null
           long_description?: string | null
           member_count?: number | null
           name?: string
           online_count?: number | null
           owner_id?: string
           short_description?: string
+          submitted_by_discord_id?: string | null
+          tags?: string[] | null
           updated_at?: string
         }
         Relationships: [
@@ -98,6 +113,7 @@ export type Database = {
           created_at: string
           discord_id: string
           discord_username: string
+          discriminator: string | null
           email: string | null
           id: string
           refresh_token: string
@@ -110,6 +126,7 @@ export type Database = {
           created_at?: string
           discord_id: string
           discord_username: string
+          discriminator?: string | null
           email?: string | null
           id?: string
           refresh_token: string
@@ -122,6 +139,7 @@ export type Database = {
           created_at?: string
           discord_id?: string
           discord_username?: string
+          discriminator?: string | null
           email?: string | null
           id?: string
           refresh_token?: string
