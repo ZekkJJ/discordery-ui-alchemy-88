@@ -10,23 +10,23 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({ isAuthenticated }) =>
   const location = useLocation();
   
   return (
-    <nav className="hidden md:flex items-center space-x-6">
+    <nav className="ml-8 space-x-4 hidden md:flex">
       <Link 
         to="/" 
-        className={`text-gray-300 hover:text-white transition-colors ${location.pathname === '/' ? 'font-medium text-white' : ''}`}
+        className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
       >
         Home
       </Link>
       <Link 
         to="/explore" 
-        className={`text-gray-300 hover:text-white transition-colors ${location.pathname === '/explore' ? 'font-medium text-white' : ''}`}
+        className={`nav-link ${location.pathname === '/explore' ? 'active' : ''}`}
       >
         Explore
       </Link>
       {isAuthenticated && (
         <Link 
           to="/dashboard" 
-          className={`text-gray-300 hover:text-white transition-colors ${location.pathname === '/dashboard' ? 'font-medium text-white' : ''}`}
+          className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
         >
           Dashboard
         </Link>

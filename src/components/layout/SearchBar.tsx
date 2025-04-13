@@ -2,17 +2,15 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 
-const SearchBar = () => {
+const SearchBar: React.FC = () => {
   return (
-    <div className="relative">
-      <div className="relative flex items-center">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Quick search..."
-          className="w-full md:w-64 bg-gray-800 text-gray-100 text-sm rounded-full py-2 pl-9 pr-4 border border-gray-700 focus:border-indigo-500 focus:outline-none"
-        />
-      </div>
+    <div className="relative hidden md:block">
+      <input
+        type="text"
+        placeholder="Quick search..."
+        className="bg-discordery-card-bg text-sm rounded-full py-1.5 pl-9 pr-4 w-48 focus:w-64 transition-all duration-200 border border-discordery-gray/30 focus:border-discordery-indigo focus:outline-none"
+      />
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-discordery-gray w-4 h-4" />
     </div>
   );
 };
