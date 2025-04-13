@@ -1,5 +1,5 @@
 
-// Discord token exchange function
+// Function to get Discord access token
 exports.handler = async (event) => {
   try {
     // Only accept POST requests
@@ -17,12 +17,12 @@ exports.handler = async (event) => {
 
     // Parse the request body
     const body = JSON.parse(event.body);
-    const { code, redirect_uri } = body;
+    const { userId, discordId } = body;
 
-    if (!code) {
+    if (!userId && !discordId) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Missing code parameter" }),
+        body: JSON.stringify({ error: "Missing userId or discordId parameter" }),
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
@@ -30,60 +30,71 @@ exports.handler = async (event) => {
       };
     }
 
-    // Discord API configuration
-    const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || "1360393180482375691";
-    const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-    const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
-
-    if (!DISCORD_CLIENT_SECRET) {
+    // Supabase configuration
+    const SUPABASE_URL = process.env.SUPABASE_URL || "https://hyoaegvyvmzpbvhtzbpv.supabase.co";
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Server configuration error: Missing Discord client secret" }),
+        body: JSON.stringify({ error: "Server configuration error (missing Supabase key)" }),
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
       };
     }
-
-    // Create form data for token exchange
-    const formData = new URLSearchParams();
-    formData.append("client_id", DISCORD_CLIENT_ID);
-    formData.append("client_secret", DISCORD_CLIENT_SECRET);
-    formData.append("grant_type", "authorization_code");
-    formData.append("code", code);
-    formData.append("redirect_uri", redirect_uri);
-
-    // Exchange code for token
-    const response = await fetch(DISCORD_TOKEN_URL, {
-      method: "POST",
-      body: formData,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Discord token exchange error:", errorText);
+    
+    // Create Supabase client with service role key to bypass RLS
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    let userData = null;
+    
+    // Try to find user by ID first if provided
+    if (userId) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('access_token')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Error fetching by userId:", error);
+      } else if (data) {
+        userData = data;
+      }
+    }
+    
+    // If no data yet and discordId is provided, try finding by Discord ID
+    if (!userData && discordId) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('access_token')
+        .eq('discord_id', discordId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Error fetching by discordId:", error);
+      } else if (data) {
+        userData = data;
+      }
+    }
+    
+    if (!userData || !userData.access_token) {
       return {
-        statusCode: response.status,
-        body: JSON.stringify({ 
-          error: "Failed to exchange code for token",
-          details: errorText
-        }),
+        statusCode: 404,
+        body: JSON.stringify({ error: "Discord token not found for this user" }),
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
       };
     }
-
-    // Return the token response
-    const tokenData = await response.json();
+    
     return {
       statusCode: 200,
-      body: JSON.stringify(tokenData),
+      body: JSON.stringify({ access_token: userData.access_token }),
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -93,7 +104,10 @@ exports.handler = async (event) => {
     console.error("Error in discord-token function:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error", details: error.message }),
+      body: JSON.stringify({ 
+        error: "Failed to get Discord token",
+        details: error.message
+      }),
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",

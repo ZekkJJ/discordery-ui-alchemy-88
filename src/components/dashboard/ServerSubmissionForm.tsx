@@ -35,7 +35,6 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
   });
   const [tagInput, setTagInput] = useState("");
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [discordToken, setDiscordToken] = useState<string | null>(null);
 
   // Categories for the dropdown
   const categories = [
@@ -43,42 +42,6 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
     "education", "social", "science", "sports", 
     "entertainment", "anime", "programming", "other"
   ];
-
-  useEffect(() => {
-    // Fetch the user's Discord access token when the component mounts
-    const fetchUserToken = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Fetch user data from the database
-        const { data, error } = await supabase
-          .from('users')
-          .select('access_token')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (error || !data?.access_token) {
-          console.error("Error fetching user token:", error);
-          
-          // Try to find by discord_id in metadata as fallback
-          if (session.user.user_metadata?.discord_id) {
-            const { data: discordUser } = await supabase
-              .from('users')
-              .select('access_token')
-              .eq('discord_id', session.user.user_metadata.discord_id)
-              .single();
-              
-            if (discordUser?.access_token) {
-              setDiscordToken(discordUser.access_token);
-            }
-          }
-        } else {
-          setDiscordToken(data.access_token);
-        }
-      }
-    };
-    
-    fetchUserToken();
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -127,7 +90,29 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
         return;
       }
       
-      // Include the Discord access token in the request
+      // Get user ID and Discord ID for token lookup
+      const userId = session.user.id;
+      const discordId = session.user.user_metadata?.discord_id;
+      
+      // Get Discord token via Netlify function
+      const tokenResponse = await fetch("/.netlify/functions/discord-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          discordId
+        }),
+      });
+      
+      if (!tokenResponse.ok) {
+        throw new Error("Failed to retrieve your Discord token. Please try logging in again.");
+      }
+      
+      const tokenData = await tokenResponse.json();
+      
+      // Submit server using the Netlify function
       const response = await fetch('/.netlify/functions/add-server', {
         method: 'POST',
         headers: {
@@ -140,7 +125,7 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
           inviteLink: formData.inviteLink,
           tags: formData.tags,
           category: formData.category,
-          discordAccessToken: discordToken  // Add this line to include the Discord access token
+          discordAccessToken: tokenData.access_token
         }),
       });
 

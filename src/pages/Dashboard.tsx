@@ -32,37 +32,47 @@ const Dashboard = () => {
         return;
       }
       
-      // Fetch the current user data to get their Discord access token
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('access_token')
-        .eq('id', session.user.id)
-        .single();
+      // Get user ID and Discord ID from session metadata
+      const userId = session.user.id;
+      const discordId = session.user.user_metadata?.discord_id;
       
-      if (userError || !userData?.access_token) {
-        console.error("Error fetching user data:", userError);
-        
-        // Try to get token from user metadata as fallback
-        const discordId = session.user.user_metadata?.discord_id;
-        if (discordId) {
-          const { data: discordUser } = await supabase
-            .from('users')
-            .select('access_token')
-            .eq('discord_id', discordId)
-            .single();
-            
-          if (discordUser?.access_token) {
-            fetchUserGuilds(discordUser.access_token);
-          } else {
-            toast.error("Could not retrieve your Discord token. Please try logging in again.");
-          }
-        } else {
-          toast.error("Could not retrieve your Discord token. Please try logging in again.");
-        }
+      if (!userId && !discordId) {
+        toast.error("User information is incomplete. Please try logging in again.");
         return;
       }
       
-      fetchUserGuilds(userData.access_token);
+      try {
+        // Fetch Discord access token using Netlify function
+        const tokenResponse = await fetch("/.netlify/functions/discord-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            discordId
+          }),
+        });
+        
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text();
+          console.error("Failed to fetch Discord token:", tokenResponse.status, errorText);
+          toast.error("Could not retrieve your Discord token. Please try logging in again.");
+          return;
+        }
+        
+        const tokenData = await tokenResponse.json();
+        if (!tokenData.access_token) {
+          toast.error("Could not retrieve your Discord token. Please try logging in again.");
+          return;
+        }
+        
+        // Fetch user guilds with the token
+        fetchUserGuilds(tokenData.access_token);
+      } catch (error) {
+        console.error("Error in auth check:", error);
+        toast.error("Failed to authenticate. Please try logging in again.");
+      }
     };
     
     checkAuth();
@@ -128,17 +138,33 @@ const Dashboard = () => {
     // Reset selected guild
     setSelectedGuild(null);
     
-    // Refresh guild list to update isAlreadyListed status
+    // Get user ID and Discord ID from session
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('access_token')
-        .eq('id', session.user.id)
-        .single();
+      const userId = session.user.id;
+      const discordId = session.user.user_metadata?.discord_id;
+      
+      // Refresh guild list with updated token
+      try {
+        const tokenResponse = await fetch("/.netlify/functions/discord-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            discordId
+          }),
+        });
         
-      if (userData?.access_token) {
-        fetchUserGuilds(userData.access_token);
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+          if (tokenData.access_token) {
+            fetchUserGuilds(tokenData.access_token);
+          }
+        }
+      } catch (error) {
+        console.error("Error refreshing guilds:", error);
       }
     }
   };
