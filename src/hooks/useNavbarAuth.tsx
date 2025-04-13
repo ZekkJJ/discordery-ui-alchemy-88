@@ -13,16 +13,20 @@ export const useNavbarAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    console.log("Setting up auth state listener...");
+    
+    // Set up auth state listener FIRST to prevent deadlocks
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log("Auth state changed:", event);
+        console.log("Auth state changed:", event, newSession?.user?.id);
+        
+        // Update session and user state immediately
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // If user just signed in, fetch their profile data
+        // If user signed in or token refreshed, fetch profile data
+        // Use setTimeout to defer the Supabase call and prevent deadlocks
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
-          // Use setTimeout to avoid potential deadlocks with Supabase auth
           setTimeout(() => {
             fetchUserData(newSession.user.id);
           }, 0);
@@ -40,7 +44,7 @@ export const useNavbarAuth = () => {
       try {
         setIsLoading(true);
         
-        // First try to get existing session
+        // Get existing session
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -49,9 +53,11 @@ export const useNavbarAuth = () => {
           return;
         }
         
+        console.log("Initial session check:", currentSession?.user?.id);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
+        // If user is logged in, fetch their data
         if (currentSession?.user) {
           await fetchUserData(currentSession.user.id);
         } else {
@@ -83,8 +89,7 @@ export const useNavbarAuth = () => {
         .maybeSingle();
       
       if (error) {
-        console.error("Error fetching user data:", error);
-        // Continue to try other methods
+        console.error("Error fetching user data by ID:", error);
       } else if (data) {
         console.log("User data found by ID:", data);
         setUserData(data);
@@ -114,28 +119,8 @@ export const useNavbarAuth = () => {
         }
       }
       
-      // Finally, try to find by email as a last resort
-      if (authUser?.user?.email) {
-        console.log("Trying to find user by email:", authUser.user.email);
-        
-        const { data: emailData, error: emailError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', authUser.user.email)
-          .maybeSingle();
-          
-        if (emailError) {
-          console.error("Error fetching user data by email:", emailError);
-        } else if (emailData) {
-          console.log("User data found by email:", emailData);
-          setUserData(emailData);
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // Debug: Log user metadata and available users
-      console.log("User metadata:", user?.user_metadata);
+      // If still no data found, log some debug info
+      console.log("User data not found. User metadata:", user?.user_metadata);
       
       const { data: allUsers, error: allUsersError } = await supabase
         .from('users')

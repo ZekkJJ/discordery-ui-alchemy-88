@@ -61,37 +61,41 @@ const DiscordAuth = () => {
         const email = `${userData.id}@discord.user`;
         const password = "discord-oauth-user"; // Common password for Discord OAuth users
         
-        // Sign up user first
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        // Try to sign in first (most users will already have an account)
+        console.log("Attempting to sign in with existing account");
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
-          options: {
-            data: {
-              discord_id: userData.id,
-              discord_username: userData.username,
-              provider: "discord",
-              avatar: userData.avatar
-            }
-          }
         });
         
-        let authData;
-        
-        // If user already exists, sign in instead
-        if (signUpError && signUpError.message.includes("already")) {
-          console.log("User exists, signing in instead");
-          const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        if (signInError) {
+          console.log("Sign in failed, attempting signup instead:", signInError.message);
+          // If user doesn't exist, sign up instead
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+              data: {
+                discord_id: userData.id,
+                discord_username: userData.username,
+                provider: "discord",
+                avatar: userData.avatar
+              }
+            }
           });
           
-          if (signInError) throw new Error(`Authentication failed: ${signInError.message}`);
-          authData = data;
+          if (signUpError) {
+            throw new Error(`Authentication failed: ${signUpError.message}`);
+          }
+          
+          console.log("Signup successful:", signUpData);
+          // Use the sign-up data
+          var authData = signUpData;
         } else {
-          authData = signUpData;
+          console.log("Sign in successful:", signInData);
+          // Use the sign-in data
+          var authData = signInData;
         }
-        
-        console.log("Authentication successful:", authData);
         
         // First get the current user's ID from the auth session
         const userId = authData.user?.id;
@@ -121,6 +125,10 @@ const DiscordAuth = () => {
         }
         
         console.log("User data stored successfully");
+        
+        // Re-fetch the current session to ensure it's up to date
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log("Current session after auth:", sessionData);
         
         // Success - redirect to home
         toast.success("Successfully authenticated with Discord!");
