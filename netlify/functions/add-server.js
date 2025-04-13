@@ -25,12 +25,12 @@ exports.handler = async (event) => {
       category
     } = body;
 
-    // Get auth token from header
+    // Get Discord token from Authorization header
     const authHeader = event.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return {
         statusCode: 401,
-        body: JSON.stringify({ error: "Missing or invalid authorization" }),
+        body: JSON.stringify({ error: "Missing or invalid Discord authorization token" }),
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
     // Get Discord server details
     const DISCORD_API_URL = `https://discord.com/api/guilds/${discordServerId}`;
 
-    // Fetch server info from Discord
+    // Fetch server info from Discord using the Discord token
     const guildResponse = await fetch(`${DISCORD_API_URL}?with_counts=true`, {
       headers: {
         Authorization: `Bearer ${token}`,

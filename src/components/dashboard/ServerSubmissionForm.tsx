@@ -12,6 +12,7 @@ interface Guild {
   name: string;
   icon: string;
   owner: boolean;
+  isAlreadyListed: boolean;
 }
 
 interface ServerSubmissionFormProps {
@@ -112,20 +113,19 @@ const ServerSubmissionForm = ({ selectedGuild, onSubmitSuccess }: ServerSubmissi
       
       const tokenData = await tokenResponse.json();
       
-      // Submit server using the Netlify function
+      // Submit server using the Netlify function with Discord access token in the request
       const response = await fetch('/.netlify/functions/add-server', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${tokenData.access_token}` // Use Discord token, not session token
         },
         body: JSON.stringify({
           discordServerId: selectedGuild.id,
           description: formData.description,
           inviteLink: formData.inviteLink,
           tags: formData.tags,
-          category: formData.category,
-          discordAccessToken: tokenData.access_token
+          category: formData.category
         }),
       });
 
