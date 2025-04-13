@@ -1,9 +1,16 @@
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-const DiscordLoginButton = () => {
+interface DiscordLoginButtonProps {
+  user: User | null;
+  onLogout?: () => void;
+}
+
+const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -18,6 +25,26 @@ const DiscordLoginButton = () => {
       setIsLoading(false);
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      await supabase.auth.signOut();
+      toast.success("Logged out successfully");
+      if (onLogout) {
+        onLogout();
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (user) {
+    return null; // Don't render the button if user is logged in
+  }
 
   return (
     <Button

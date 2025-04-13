@@ -19,35 +19,27 @@ const DiscordAuth = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const handleAuth = async () => {
+    const checkSession = async () => {
       try {
         setLoading(true);
         
-        // Get the Discord auth code from URL
-        const urlParams = new URLSearchParams(location.search);
-        const discordId = urlParams.get("discord_id");
-        
-        if (!discordId) {
-          throw new Error("Authentication failed: Missing discord ID");
-        }
-
         // Check if we're already logged in with Supabase
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (!session) {
+        if (session) {
+          // Show success dialog
+          setShowDialog(true);
+          toast.success("Successfully authenticated with Discord!");
+          
+          // Redirect to dashboard
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        } else {
           throw new Error("No session found. Authentication failed.");
         }
-        
-        // Show success dialog
-        setShowDialog(true);
-        toast.success("Successfully authenticated with Discord!");
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1500);
       } catch (err) {
-        console.error("Auth error:", err);
+        console.error("Auth session check error:", err);
         setError(err instanceof Error ? err.message : "Authentication failed");
         toast.error("Authentication failed. Please try again.");
       } finally {
@@ -55,14 +47,8 @@ const DiscordAuth = () => {
       }
     };
 
-    // Only run auth flow if we have query parameters
-    if (location.search) {
-      handleAuth();
-    } else {
-      setLoading(false);
-      setError("Missing authentication parameters. Please try logging in again.");
-    }
-  }, [location, navigate]);
+    checkSession();
+  }, [navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -94,10 +80,10 @@ const DiscordAuth = () => {
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-gray-800 text-white">
           <DialogHeader>
             <DialogTitle>Authentication Successful</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-gray-300">
               You have successfully connected your Discord account. Redirecting to dashboard...
             </DialogDescription>
           </DialogHeader>
