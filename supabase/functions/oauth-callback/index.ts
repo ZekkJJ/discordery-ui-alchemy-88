@@ -276,8 +276,8 @@ serve(async (req: Request) => {
       });
     }
     
-    // Set up the session cookie and redirect to the discord-auth page on the frontend
-    const redirectUrl = new URL(`${FRONTEND_URL}/discord-auth`);
+    // Set up the session cookie and redirect directly to the homepage
+    const redirectUrl = new URL(`${FRONTEND_URL}/`);
     console.log("Redirecting to:", redirectUrl.toString());
     
     // Create a JWT cookie for the frontend
@@ -321,7 +321,7 @@ serve(async (req: Request) => {
       "discord_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
     );
 
-    console.log("Auth completed, redirecting to frontend auth handler");
+    console.log("Auth completed, redirecting to frontend homepage");
     // Final step: HTTP 302 Redirect to the frontend
     return new Response(null, {
       status: 302,
