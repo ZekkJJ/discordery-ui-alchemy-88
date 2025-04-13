@@ -23,44 +23,50 @@ const DiscordAuth = () => {
           throw new Error("Authentication failed: Missing discord ID");
         }
 
-        // Check if we're already logged in
+        // Check if we're already logged in with Supabase
         const { data: { session } } = await supabase.auth.getSession();
+        
         if (!session) {
-          throw new Error("No session found. Please try logging in again.");
+          throw new Error("No session found. Authentication failed.");
         }
         
-        toast.success("Successfully authenticated!");
+        toast.success("Successfully authenticated with Discord!");
         navigate("/dashboard");
       } catch (err) {
         console.error("Auth error:", err);
         setError(err instanceof Error ? err.message : "Authentication failed");
-        toast.error("Authentication failed!");
+        toast.error("Authentication failed. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    handleAuth();
+    // Only run auth flow if we have query parameters
+    if (location.search) {
+      handleAuth();
+    } else {
+      setLoading(false);
+    }
   }, [location, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-900">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-center max-w-md w-full">
-        <h1 className="text-2xl font-bold text-white mb-4">
+    <div className="flex flex-col items-center justify-center h-screen bg-discordery-background">
+      <div className="bg-discordery-card-bg p-8 rounded-lg shadow-lg text-center max-w-md w-full">
+        <h1 className="text-2xl font-bold mb-4">
           Discord Authentication
         </h1>
         
         {loading ? (
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-300">Completing authentication...</p>
+            <div className="w-10 h-10 border-4 border-discordery-indigo border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-discordery-gray">Completing authentication...</p>
           </div>
         ) : error ? (
           <div className="text-red-400">
             <p className="mb-4">{error}</p>
             <button
               onClick={() => navigate("/")}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors"
+              className="bg-discordery-indigo hover:bg-discordery-indigo-highlight text-white px-4 py-2 rounded transition-colors"
             >
               Return Home
             </button>
