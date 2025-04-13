@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import DiscordLoginButton from '../auth/DiscordLoginButton';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -35,7 +36,7 @@ const Navbar: React.FC = () => {
             </nav>
           </div>
           
-          {/* Right side: Quick search and user */}
+          {/* Right side: Quick search, login, and user */}
           <div className="flex items-center space-x-4">
             <div className="relative hidden md:block">
               <input
@@ -46,9 +47,9 @@ const Navbar: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-discordery-gray w-4 h-4" />
             </div>
             
-            {/* User profile placeholder */}
-            <div className="w-8 h-8 rounded-full bg-discordery-gray/20 border-2 border-transparent hover:border-discordery-indigo transition-all duration-200 flex items-center justify-center cursor-pointer">
-              <span className="text-discordery-text text-xs">U</span>
+            {/* Login/User section */}
+            <div className="flex items-center space-x-2">
+              <DiscordLoginButton />
             </div>
           </div>
         </div>
