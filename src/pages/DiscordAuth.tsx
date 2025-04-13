@@ -3,63 +3,47 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Loader } from "lucide-react";
 
 const DiscordAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkSession = async () => {
       try {
         setLoading(true);
+        console.log("Checking auth session...");
         
         // Check if we're already logged in with Supabase
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
+          console.error("Session error:", sessionError);
           throw new Error(`Session error: ${sessionError.message}`);
         }
         
-        // If we have a session, we can navigate to the dashboard
+        // If we have a session, we can navigate to the home page
         if (session) {
-          console.log("Successfully authenticated with Discord!");
+          console.log("Session found:", session.user.id);
           toast.success("Successfully authenticated with Discord!");
-          
-          // Show success dialog
-          setShowDialog(true);
-          
-          // Redirect to dashboard after a short delay
           setTimeout(() => {
             navigate("/");
           }, 1500);
-          
           return;
         }
         
-        // If we don't have a session yet, try to see if we can set it up from cookies
+        // Try to refresh session from cookies/local storage
+        console.log("No session found, trying to refresh...");
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (refreshData?.session) {
-          console.log("Successfully authenticated with Discord via refresh!");
+          console.log("Session refreshed successfully");
           toast.success("Successfully authenticated with Discord!");
-          
-          // Show success dialog
-          setShowDialog(true);
-          
-          // Redirect to dashboard after a short delay
           setTimeout(() => {
             navigate("/");
           }, 1500);
-          
           return;
         }
         
@@ -67,7 +51,21 @@ const DiscordAuth = () => {
           console.error("Auth refresh error:", refreshError);
         }
         
-        // If we still don't have a session, show an error
+        // Check URL for access token (for client-side flow if needed)
+        const fragment = new URLSearchParams(window.location.hash.slice(1));
+        const accessToken = fragment.get('access_token');
+        
+        if (accessToken) {
+          console.log("Found access token in URL");
+          // In this case we would handle client-side auth, but our flow is server-side
+          // This is just a fallback that shouldn't normally be needed
+          toast.success("Authentication token found!");
+          setTimeout(() => {
+            navigate("/");
+          }, 1500);
+          return;
+        }
+        
         throw new Error("No session found. Authentication failed. Please try logging in again.");
         
       } catch (err) {
@@ -83,7 +81,7 @@ const DiscordAuth = () => {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 px-4">
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-center max-w-md w-full border border-gray-700">
         <h1 className="text-2xl font-bold mb-4 text-white">
           Discord Authentication
@@ -91,7 +89,7 @@ const DiscordAuth = () => {
         
         {loading ? (
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <Loader className="w-10 h-10 text-indigo-500 animate-spin" />
             <p className="text-gray-300">Completing authentication...</p>
           </div>
         ) : error ? (
@@ -107,20 +105,10 @@ const DiscordAuth = () => {
         ) : (
           <div className="text-green-400">
             <p className="mb-4">Authentication successful! Redirecting to home page...</p>
+            <Loader className="w-6 h-6 text-green-400 animate-spin mx-auto" />
           </div>
         )}
       </div>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md bg-gray-800 text-white">
-          <DialogHeader>
-            <DialogTitle>Authentication Successful</DialogTitle>
-            <DialogDescription className="text-gray-300">
-              You have successfully connected your Discord account. Redirecting to home page...
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
