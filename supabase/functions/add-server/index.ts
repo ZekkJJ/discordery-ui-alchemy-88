@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 const DISCORD_GUILD_URL = "https://discord.com/api/users/@me/guilds";
 
 // Environment variables
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://hyoaegvyvmzpbvhtzbpv.supabase.co";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://eahmzxgmnyacbwahdanv.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 // CORS headers for browser requests

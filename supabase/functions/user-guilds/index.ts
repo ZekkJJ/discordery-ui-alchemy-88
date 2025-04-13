@@ -7,7 +7,7 @@ const DISCORD_GUILDS_URL = "https://discord.com/api/users/@me/guilds";
 const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
 
 // Environment variables
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://hyoaegvyvmzpbvhtzbpv.supabase.co";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://eahmzxgmnyacbwahdanv.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID") || "1360393180482375691";
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET");
