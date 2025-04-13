@@ -1,8 +1,10 @@
 
 import React from 'react';
 import { Users, Star, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface DiscordCardProps {
+  id?: string;
   type: 'bot' | 'server';
   name: string;
   description: string;
@@ -15,6 +17,7 @@ interface DiscordCardProps {
 }
 
 const DiscordCard: React.FC<DiscordCardProps> = ({
+  id = '1',
   type,
   name,
   description,
@@ -22,6 +25,9 @@ const DiscordCard: React.FC<DiscordCardProps> = ({
   tags,
   stats
 }) => {
+  // For proper routing
+  const detailPath = type === 'server' ? `/server/${id}` : `/bot/${id}`;
+  
   return (
     <div className="discord-card h-full flex flex-col">
       {/* Card image */}
@@ -73,10 +79,10 @@ const DiscordCard: React.FC<DiscordCardProps> = ({
       
       {/* Card footer */}
       <div className="px-4 pb-4">
-        <button className="btn-primary w-full flex items-center justify-center">
-          <span className="mr-1">{type === 'bot' ? 'View Bot' : 'View Server'}</span>
+        <Link to={detailPath} className="btn-primary w-full flex items-center justify-center">
+          <span className="mr-1">View {type === 'bot' ? 'Bot' : 'Server'}</span>
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     </div>
   );

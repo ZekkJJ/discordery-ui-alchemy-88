@@ -1,11 +1,12 @@
 
 import React from 'react';
 import DiscordCard from '../cards/DiscordCard';
+import { Link } from 'react-router-dom';
 
 // Sample data
 const featuredItems = [
   {
-    id: 1,
+    id: 'gamers-haven',
     type: 'server' as const,
     name: 'Gamers Haven',
     description: 'The ultimate Discord server for gamers of all levels. Join tournaments, find teammates, and discuss the latest releases.',
@@ -14,16 +15,16 @@ const featuredItems = [
     stats: { members: 15420 }
   },
   {
-    id: 2,
-    type: 'bot' as const,
-    name: 'MusicMaster',
-    description: 'Premium music bot with high quality audio, no lag, and support for Spotify, YouTube, and more platforms.',
+    id: 'music-master',
+    type: 'server' as const,
+    name: 'Music Lounge',
+    description: 'A community for music lovers. Share your favorite songs, discover new artists, and join listening parties.',
     imageUrl: '/placeholder.svg',
-    tags: ['Music', 'Audio', 'Utility'],
-    stats: { stars: 4320 }
+    tags: ['Music', 'Community', 'Artists'],
+    stats: { members: 8750 }
   },
   {
-    id: 3,
+    id: 'designers-collective',
     type: 'server' as const,
     name: 'Designers Collective',
     description: 'A community for UI/UX designers, graphic artists and creative professionals to share work and get feedback.',
@@ -32,13 +33,13 @@ const featuredItems = [
     stats: { members: 8765 }
   },
   {
-    id: 4,
-    type: 'bot' as const,
-    name: 'ModeratorPro',
-    description: 'Advanced moderation bot with auto-mod features, custom commands, and detailed logging for server management.',
+    id: 'coding-hub',
+    type: 'server' as const,
+    name: 'Coding Hub',
+    description: 'Connect with fellow developers, get help with coding problems, and collaborate on projects.',
     imageUrl: '/placeholder.svg',
-    tags: ['Moderation', 'Utility', 'Security'],
-    stats: { stars: 6250 }
+    tags: ['Programming', 'Development', 'Technology'],
+    stats: { members: 12340 }
   }
 ];
 
@@ -49,15 +50,16 @@ const FeaturedSection: React.FC = () => {
         <h2 className="text-2xl font-bold">
           <span className="text-discordery-teal">#</span> Trending Now
         </h2>
-        <a href="/explore" className="text-discordery-indigo hover:text-discordery-indigo-highlight transition-colors flex items-center">
+        <Link to="/explore" className="text-discordery-indigo hover:text-discordery-indigo-highlight transition-colors flex items-center">
           View all
-        </a>
+        </Link>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {featuredItems.map((item) => (
           <DiscordCard
             key={item.id}
+            id={item.id}
             type={item.type}
             name={item.name}
             description={item.description}

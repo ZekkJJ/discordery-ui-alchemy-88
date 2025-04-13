@@ -40,19 +40,14 @@ const Index: React.FC = () => {
       {/* Call to Action */}
       <section className="py-12">
         <div className="bg-gradient-to-r from-discordery-indigo to-discordery-teal p-8 md:p-12 rounded-xl text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">Add Your Discord Server or Bot</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">Add Your Discord Server</h2>
           <p className="text-lg opacity-80 mb-6 max-w-xl mx-auto">
-            Reach thousands of users by listing your Discord server or bot on Discordery.
+            Reach thousands of users by listing your Discord server on Discordery.
             It's completely free and takes just a few minutes.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="btn-primary bg-white text-discordery-indigo hover:bg-gray-100">
-              Add Server
-            </button>
-            <button className="btn-secondary border-white text-white hover:bg-white/10">
-              Add Bot
-            </button>
-          </div>
+          <button className="btn-primary bg-white text-discordery-indigo hover:bg-gray-100">
+            Add Server
+          </button>
         </div>
       </section>
     </PageLayout>

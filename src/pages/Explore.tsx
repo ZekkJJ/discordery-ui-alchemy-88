@@ -7,7 +7,7 @@ import DiscordCard from '../components/cards/DiscordCard';
 // Sample data - in a real app, this would come from an API
 const exploreItems = [
   {
-    id: 1,
+    id: 'gamers-haven',
     type: 'server' as const,
     name: 'Gamers Haven',
     description: 'The ultimate Discord server for gamers of all levels. Join tournaments, find teammates, and discuss the latest releases.',
@@ -16,16 +16,16 @@ const exploreItems = [
     stats: { members: 15420 }
   },
   {
-    id: 2,
-    type: 'bot' as const,
-    name: 'MusicMaster',
-    description: 'Premium music bot with high quality audio, no lag, and support for Spotify, YouTube, and more platforms.',
+    id: 'music-lounge',
+    type: 'server' as const,
+    name: 'Music Lounge',
+    description: 'A community for music lovers. Share your favorite songs, discover new artists, and join listening parties.',
     imageUrl: '/placeholder.svg',
-    tags: ['Music', 'Audio', 'Utility'],
-    stats: { stars: 4320 }
+    tags: ['Music', 'Community', 'Artists'],
+    stats: { members: 8750 }
   },
   {
-    id: 3,
+    id: 'designers-collective',
     type: 'server' as const,
     name: 'Designers Collective',
     description: 'A community for UI/UX designers, graphic artists and creative professionals to share work and get feedback.',
@@ -34,16 +34,16 @@ const exploreItems = [
     stats: { members: 8765 }
   },
   {
-    id: 4,
-    type: 'bot' as const,
-    name: 'ModeratorPro',
-    description: 'Advanced moderation bot with auto-mod features, custom commands, and detailed logging for server management.',
+    id: 'coding-hub',
+    type: 'server' as const,
+    name: 'Coding Hub',
+    description: 'Connect with fellow developers, get help with coding problems, and collaborate on projects.',
     imageUrl: '/placeholder.svg',
-    tags: ['Moderation', 'Utility', 'Security'],
-    stats: { stars: 6250 }
+    tags: ['Programming', 'Development', 'Technology'],
+    stats: { members: 12340 }
   },
   {
-    id: 5,
+    id: 'anime-world',
     type: 'server' as const,
     name: 'Anime World',
     description: 'A welcoming community for anime fans to discuss shows, share art, and participate in watch parties.',
@@ -52,16 +52,16 @@ const exploreItems = [
     stats: { members: 12800 }
   },
   {
-    id: 6,
-    type: 'bot' as const,
-    name: 'EconomySimulator',
-    description: 'Create a virtual economy in your server with currency, jobs, gambling, and more interactive features.',
+    id: 'language-exchange',
+    type: 'server' as const,
+    name: 'Language Exchange',
+    description: 'Practice languages with native speakers. Voice channels for English, Spanish, French, Japanese, and more!',
     imageUrl: '/placeholder.svg',
-    tags: ['Economy', 'Games', 'RPG'],
-    stats: { stars: 3900 }
+    tags: ['Education', 'Languages', 'International'],
+    stats: { members: 6800 }
   },
   {
-    id: 7,
+    id: 'developers-hub',
     type: 'server' as const,
     name: 'Developers Hub',
     description: 'Connect with fellow developers, get help with coding problems, and collaborate on projects.',
@@ -70,13 +70,13 @@ const exploreItems = [
     stats: { members: 9300 }
   },
   {
-    id: 8,
-    type: 'bot' as const,
-    name: 'EventPlanner',
-    description: 'Organize server events with RSVP functionality, reminders, and timezone management.',
+    id: 'art-showcase',
+    type: 'server' as const,
+    name: 'Art Showcase',
+    description: 'Share your artwork, get constructive feedback, and connect with other artists. All skill levels welcome!',
     imageUrl: '/placeholder.svg',
-    tags: ['Events', 'Organization', 'Utility'],
-    stats: { stars: 2840 }
+    tags: ['Art', 'Creative', 'Showcase'],
+    stats: { members: 5600 }
   },
 ];
 
@@ -95,6 +95,7 @@ const Explore: React.FC = () => {
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <DiscordCard
+              id={item.id}
               type={item.type}
               name={item.name}
               description={item.description}

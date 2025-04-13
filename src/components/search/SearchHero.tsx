@@ -21,7 +21,7 @@ const SearchHero: React.FC = () => {
       </h1>
       
       <p className="text-discordery-gray text-lg md:text-xl mb-8 max-w-2xl mx-auto animate-fade-in-2">
-        Find and join the perfect Discord servers and bots for gaming, education, art,
+        Find and join the perfect Discord servers for gaming, education, art,
         music, or whatever community you're looking for.
       </p>
       
@@ -31,7 +31,7 @@ const SearchHero: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for Discord servers or bots..."
+            placeholder="Search for Discord servers..."
             className="search-input"
           />
           <button
