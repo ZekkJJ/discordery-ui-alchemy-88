@@ -17,19 +17,36 @@ const DiscordAuth = () => {
         
         // Get the Discord auth code from URL
         const urlParams = new URLSearchParams(location.search);
-        const discordId = urlParams.get("discord_id");
+        const code = urlParams.get("code");
         
-        if (!discordId) {
-          throw new Error("Authentication failed: Missing discord ID");
+        if (!code) {
+          throw new Error("Authentication failed: Missing authorization code from Discord");
         }
 
+        console.log("Received Discord authorization code:", code);
+
+        // Exchange the code for access token
+        // This should be done on the backend to keep the client_secret secure
+        // For now, we'll simulate the process by checking if we have a session
+        
         // Check if we're already logged in
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
+          // In a real implementation, you would send the code to your backend
+          // const response = await fetch('/api/oauth/callback', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ code })
+          // });
+          // const data = await response.json();
+          // if (!data.success) throw new Error(data.message);
+          
           throw new Error("No session found. Please try logging in again.");
         }
         
-        toast.success("Successfully authenticated!");
+        // Here you would typically store the Discord tokens and user info
+        // For now, we'll just redirect to dashboard
+        toast.success("Successfully authenticated with Discord!");
         navigate("/dashboard");
       } catch (err) {
         console.error("Auth error:", err);
