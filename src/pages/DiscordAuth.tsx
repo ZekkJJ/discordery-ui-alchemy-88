@@ -42,7 +42,7 @@ const DiscordAuth = () => {
         setShowDialog(true);
         toast.success("Successfully authenticated with Discord!");
         
-        // Redirect after a short delay
+        // Redirect to dashboard
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);
@@ -88,7 +88,7 @@ const DiscordAuth = () => {
           </div>
         ) : (
           <div className="text-green-400">
-            <p className="mb-4">Authentication successful! Redirecting...</p>
+            <p className="mb-4">Authentication successful! Redirecting to dashboard...</p>
           </div>
         )}
       </div>

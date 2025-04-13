@@ -303,9 +303,8 @@ serve(async (req: Request) => {
       });
     }
     
-    // Set up the session cookie and redirect
-    const redirectUrl = new URL(`${FRONTEND_URL}/discord-auth`);
-    redirectUrl.searchParams.set("discord_id", userData.id);
+    // Set up the session cookie and redirect - redirect straight to dashboard!
+    const redirectUrl = new URL(`${FRONTEND_URL}/dashboard`);
     console.log("Redirecting to:", redirectUrl.toString());
     
     // Prepare headers with session cookie
@@ -321,8 +320,8 @@ serve(async (req: Request) => {
     // Clear the state cookie
     headers.append("Set-Cookie", "discord_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0");
 
-    console.log("Auth completed, redirecting to discord-auth page");
-    // Final step: HTTP 302 Redirect to the frontend
+    console.log("Auth completed, redirecting to dashboard page");
+    // Final step: HTTP 302 Redirect to the dashboard
     return new Response(null, {
       status: 302,
       headers,
