@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,7 +138,8 @@ const DiscordAuth = () => {
         navigate("/");
       } catch (err) {
         console.error("Auth error:", err);
-        setError(err instanceof Error ? err.message : "Authentication failed");
+        const errorMessage = err instanceof Error ? err.message : "Authentication failed";
+        setError(errorMessage);
         toast.error("Authentication failed. Please try again.");
         setLoading(false);
       }
@@ -158,7 +158,8 @@ const DiscordAuth = () => {
         await exchangeCodeForToken(code);
       } catch (err) {
         console.error("Auth processing error:", err);
-        setError(err instanceof Error ? err.message : "Authentication failed");
+        const errorMessage = err instanceof Error ? err.message : "Authentication failed";
+        setError(errorMessage);
         toast.error("Authentication failed. Please try again.");
         setLoading(false);
       }
