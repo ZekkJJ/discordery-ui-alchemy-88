@@ -9,9 +9,9 @@ const DISCORD_USER_URL = "https://discord.com/api/users/@me";
 // Environment variables
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://eahmzxgmnyacbwahdanv.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID") || "1360393180482375691";
+const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID");
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET");
-const REDIRECT_URI = Deno.env.get("DISCORD_REDIRECT_URI") || "https://eahmzxgmnyacbwahdanv.supabase.co/functions/v1/oauth-callback";
+const REDIRECT_URI = Deno.env.get("DISCORD_REDIRECT_URI");
 const FRONTEND_URL = "https://www.discordery.xyz"; // Updated frontend URL
 
 // CORS headers for browser requests
