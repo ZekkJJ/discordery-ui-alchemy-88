@@ -19,7 +19,7 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
       setIsLoading(true);
       toast.info("Connecting to Discord...");
       
-      // Call the Supabase Edge Function to handle the OAuth flow
+      // Direct the user to the edge function
       window.location.href = "https://eahmzxgmnyacbwahdanv.supabase.co/functions/v1/oauth-login";
     } catch (error) {
       console.error("Login error:", error);

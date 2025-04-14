@@ -93,7 +93,7 @@ enabled = true
 client_id = "1360393180482375691"
 secret = "discord-client-secret-here"
 # Overrides the default auth redirectUrl.
-redirect_uri = ""
+redirect_uri = "https://eahmzxgmnyacbwahdanv.supabase.co/functions/v1/oauth-callback"
 # Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
 # or any other third-party OIDC providers.
 url = ""
