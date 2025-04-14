@@ -7,7 +7,7 @@ import { Loader } from "lucide-react";
 
 // Discord API constants
 const DISCORD_CLIENT_ID = "1360393180482375691";
-const REDIRECT_URI = "https://www.discordery.xyz/discord-auth";
+const REDIRECT_URI = "https://eahmzxgmnyacbwahdanv.supabase.co/functions/v1/oauth-callback";
 
 const DiscordAuth = () => {
   const [loading, setLoading] = useState(true);

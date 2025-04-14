@@ -19,12 +19,8 @@ const DiscordLoginButton = ({ user, onLogout }: DiscordLoginButtonProps) => {
       setIsLoading(true);
       toast.info("Connecting to Discord...");
       
-      // Use direct Discord OAuth URL with correct callback
-      const redirectUri = encodeURIComponent("https://www.discordery.xyz/discord-auth");
-      const scope = encodeURIComponent("identify guilds guilds.members.read guilds.join");
-      
-      // Direct Discord OAuth URL
-      window.location.href = `https://discord.com/oauth2/authorize?client_id=1360393180482375691&response_type=code&redirect_uri=${redirectUri}&scope=${scope}`;
+      // Call the Supabase Edge Function to handle the OAuth flow
+      window.location.href = "https://eahmzxgmnyacbwahdanv.supabase.co/functions/v1/oauth-login";
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Failed to connect to Discord. Please try again.");
